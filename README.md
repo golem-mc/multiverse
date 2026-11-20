@@ -15,6 +15,7 @@ Bukkit or Paper finds the same `/mv` and the same `config.yml` and
 |---|---|---|
 | Multiverse-Core | `github.com/golem-mc/multiverse` | `/mv` and its world manager |
 | Multiverse-Inventories | `github.com/golem-mc/multiverse/inventories` | Separate inventories and stats per world, group and game mode |
+| Multiverse-Portals | `github.com/golem-mc/multiverse/portals` | `/mvp`: portals that send whoever walks in to a destination |
 
 Multiverse-Core:
 
@@ -106,9 +107,34 @@ Multiverse-Inventories:
   (`WorldChangeShareHandlingEvent`, `GameModeChangeShareHandlingEvent`, ...)
   for other plugins to listen to and cancel
 
+Multiverse-Portals:
+
+- `config.yml` with every Multiverse-Portals 5.3 option and its comments, and
+  `portals.yml` with every portal property; Multiverse-Portals 4 files are
+  migrated
+- `/mvp create`, `/mvp list`, `/mvp info`, `/mvp modify`, `/mvp select`,
+  `/mvp remove`, `/mvp wand`, `/mvp debug` and `/mvp config`, with tab
+  completion and the Multiverse 4 aliases (`/mvpc`, `/mvpl`, ...)
+- selecting a portal's box with the wand (`wand-material`, a wooden pickaxe
+  by default): left click the first corner, right click the second
+- the `multiverse-destination`, `command` (`op:`, `console:`, `%player%`,
+  `%world%`) and `server` (BungeeCord) action types
+- the `p:<portal>[:<direction>]` and `rp:<portal>,...` destinations
+- the permission nodes `multiverse.portal.*`, and per portal
+  `multiverse.portal.access.<portal>`, `multiverse.portal.fill.<portal>` and
+  `multiverse.portal.exempt.<portal>`
+
 ## Not yet
 
 - Every `/mv` command not listed above; they are being ported.
+- **Using Multiverse portals** (walking into one, nether portal fills, the
+  bucket and flint-and-steel fills, entry fees, cooldowns, frames): being
+  ported.
+- **WorldEdit selections for `/mvp create`**: golem's WorldEdit
+  (golem-mc/worldedit) offers a player's selection only through its
+  `core.API` service, and importing that package would build WorldEdit and
+  its SQLite driver into every server with Multiverse. Portals uses its own
+  wand until WorldEdit offers a lightweight selection interface.
 - **Bonus chests** (`/mv create --generate-bonus-chest`): golem cannot
   create a world with one yet
   ([golem-mc/golem#101](https://github.com/golem-mc/golem/issues/101)); the
@@ -156,7 +182,9 @@ Bukkit or Paper server, copy `config.yml` and `worlds.yml` from
 `plugins/Multiverse-Core/` there. Multiverse-Inventories keeps its own in
 `plugins/multiverse-inventories/`: copy `plugins/Multiverse-Inventories/`'s
 `config.yml`, `groups.yml` and the `worlds`, `groups` and `players` folders
-there.
+there. Multiverse-Portals keeps `config.yml` and
+`portals.yml` in `plugins/multiverse-portals/` (from
+`plugins/Multiverse-Portals/`).
 
 ## License
 

@@ -15,6 +15,7 @@ requires a golem commit; move to a newer one with
 | `commands/` | The `/mv` subcommands, one file per Java command class (or a few related ones) | `commands/*Command.java` |
 | `inventories/` | The `multiverse-inventories` plugin: config.yml, groups.yml, the sharables, the profile files and the share handling | Multiverse-Inventories |
 | `internal/mvtest/` | Test harness over golem's `plugintest`, and cheap test generators (`Void`, `Floor`) | — |
+| `portals/` | The `multiverse-portals` plugin: portals.yml, config.yml, `/mvp`, the `p:` and `rp:` destinations | Multiverse-Portals |
 | `cmd/server/` | A server binary with every plugin built in | — |
 
 ## How the Java maps to Go
@@ -82,3 +83,10 @@ requires a golem commit; move to a newer one with
   changing.
 - A negative entry fee (a reward) says "deposited" when it is paid out;
   Multiverse says "charged" for both directions.
+- `rp:` with no portal named picks any portal; Multiverse fails to find
+  one. `/mvp list <world>` lists that world's portals also when
+  `enforce-portal-access` is off, where Multiverse lists every portal.
+- A portal's location set with `/mvp modify` takes effect at once;
+  Multiverse finds the portal at its new place only after a reload.
+- A `command` portal action without `op:` or `console:` runs only for
+  players: golem's other entities cannot run commands.
