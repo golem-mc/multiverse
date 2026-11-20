@@ -13,7 +13,7 @@ import (
 // Multiverse is the core plugin.
 type Multiverse struct{ core *core.Core }
 
-func init() { plugin.Register("multiverse-core", &Multiverse{}) }
+func init() { plugin.Register("multiverse-core", &Multiverse{}, plugin.SoftDepends("vault")) }
 
 // Enable loads the configs and worlds, then registers the commands.
 func (m *Multiverse) Enable(srv plugin.Server) error {

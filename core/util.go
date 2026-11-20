@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/golem-mc/golem/plugin"
+	"github.com/golem-mc/vault"
 )
 
 // CanAccess reports whether sender may enter w: always, unless
@@ -22,7 +23,13 @@ func (c *Core) CanAccess(sender plugin.CommandSender, w *World) bool {
 // FormatPrice writes an entry fee: the economy's format for
 // @vault-economy, else "<amount> <ITEM>". MV: MVEconomist.formatPrice
 func (c *Core) FormatPrice(amount float64, currency string) string {
-	if currency == VaultEconomyCode || currency == "" {
+	if currency == VaultEconomyCode {
+		if eco, ok := vault.LookupEconomy(c.Server); ok {
+			return eco.Format(amount)
+		}
+		return ""
+	}
+	if currency == "" {
 		return ""
 	}
 	return JavaDouble(amount) + " " + strings.ToUpper(currency)

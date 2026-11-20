@@ -6,6 +6,7 @@ import (
 
 	"github.com/golem-mc/golem/plugin"
 	"github.com/golem-mc/golem/registry"
+	"github.com/golem-mc/vault"
 )
 
 // EntryCheck checks whether a sender may enter worlds. MV: WorldEntryChecker
@@ -65,8 +66,8 @@ func (e EntryCheck) PlayerLimit(w *World) error {
 }
 
 // Fee checks the entry fee: free for the console and with
-// multiverse.exempt.<world>. Only item fees are charged; an economy fee
-// waits for an economy service. MV: WorldEntryChecker.canPayEntryFee
+// multiverse.exempt.<world>; paid in items or, for @vault-economy, through
+// the vault.Economy service. MV: WorldEntryChecker.canPayEntryFee
 func (e EntryCheck) Fee(w *World) (pay bool, err error) {
 	price := w.Props.Double(PropEntryFeeAmount)
 	if !w.Props.Bool(PropEntryFeeEnabled) || price == 0 {
@@ -79,12 +80,23 @@ func (e EntryCheck) Fee(w *World) (pay bool, err error) {
 	if e.sender.HasPermission(Concat(PermWorldExempt, w.Name())) {
 		return false, nil
 	}
+	notEnough := MsgError(M("mv-core.entrycheck.notenoughmoney", "{amount}", e.core.FormatPrice(price, w.Props.String(PropEntryFeeCurrency))))
+	if w.Props.String(PropEntryFeeCurrency) == VaultEconomyCode {
+		eco, ok := vault.LookupEconomy(e.core.Server)
+		if !ok {
+			return false, MsgError(M("mv-core.entrycheck.cannotpayentryfee"))
+		}
+		if price > 0 && !eco.Has(p.UUID(), price) {
+			return false, notEnough
+		}
+		return true, nil
+	}
 	item, ok := currencyItem(w)
 	if !ok {
 		return false, MsgError(M("mv-core.entrycheck.cannotpayentryfee"))
 	}
 	if price > 0 && p.Inventory().Count(item) < int(price) {
-		return false, MsgError(M("mv-core.entrycheck.notenoughmoney", "{amount}", e.core.FormatPrice(price, w.Props.String(PropEntryFeeCurrency))))
+		return false, notEnough
 	}
 	return true, nil
 }
@@ -98,10 +110,27 @@ func currencyItem(w *World) (registry.Item, bool) {
 	return registry.ItemByName("minecraft:" + strings.ToLower(cur))
 }
 
-// PayEntryFee charges p w's item entry fee, or pays it out when negative.
-// MV: MVEconomist.payEntryFee, ItemEconomy
+// PayEntryFee charges p w's entry fee, or pays it out when negative.
+// MV: MVEconomist.payEntryFee, ItemEconomy, VaultHandler
 func (c *Core) PayEntryFee(p plugin.Player, w *World) {
 	price := w.Props.Double(PropEntryFeeAmount)
+	if w.Props.String(PropEntryFeeCurrency) == VaultEconomyCode {
+		eco, ok := vault.LookupEconomy(c.Server)
+		if !ok || price == 0 {
+			return
+		}
+		is := c.Issuer(p)
+		if price > 0 {
+			if eco.Withdraw(p.UUID(), price).Success() {
+				is.Info(M("mv-core.economy.vault.withdraw", "{price}", eco.Format(price)))
+			}
+			return
+		}
+		if eco.Deposit(p.UUID(), -price).Success() {
+			is.Info(M("mv-core.economy.vault.deposit", "{price}", eco.Format(-price)))
+		}
+		return
+	}
 	item, ok := currencyItem(w)
 	if !ok || price == 0 {
 		return
