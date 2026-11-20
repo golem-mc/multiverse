@@ -178,7 +178,7 @@ Groups in `groups.yml` list worlds and the data they share: `inventory`, `ender_
 
 ## Migrating from Bukkit or Paper
 
-Stop the old server, copy each `plugins/Multiverse-*/` folder's files (`config.yml`, `worlds.yml`, `groups.yml`, `portals.yml`, `links.yml`, `anchors.yml` and the player data folders) into the matching directory above and start golem. Multiverse 4 configs and player data are converted on first start. World folders keep working with `/mv import`; golem stores them under `<level>/dimensions/<namespace>/<path>`.
+Stop the old server, copy each `plugins/Multiverse-*/` folder's files (`config.yml`, `worlds.yml`, `groups.yml`, `portals.yml`, `links.yml`, `anchors.yml` and the player data folders) into the matching directory above and start golem. Multiverse 4 configs and player data are converted on first start. World folders keep working with `/mv import`.
 
 Works with: [Vault](https://github.com/golem-mc/vault) (entry fees and per-world balances).
 
@@ -188,7 +188,7 @@ Works with: [Vault](https://github.com/golem-mc/vault) (entry fees and per-world
 - `/mv delete` and `/mv regen` refuse the three vanilla dimensions.
 - `/mv tp` accepts only the argument-less player selectors `@a`, `@p`, `@r`, `@s` and `@e`.
 - `/mv gamerule` also accepts `keepInventory` and `keep_inventory`, and takes only `true` or `false` for a boolean rule.
-- Mobs and vehicles do not use portals, `--generate-bonus-chest` has no effect, game rules are server-wide rather than per world, and portals cannot select regions with WorldEdit (use `/mvp wand`).
+- `--generate-bonus-chest` has no effect, game rules are server-wide rather than per world, and portals cannot select regions with WorldEdit (use `/mvp wand`).
 - Multiverse-InventoriesImporter, PlaceholderAPI placeholders and LuckPerms world contexts are not available.
 
 ## License
