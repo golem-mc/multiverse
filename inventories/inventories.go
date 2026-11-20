@@ -45,6 +45,8 @@ type Module struct {
 	economyWarned bool
 	dupe          *dupingPatch
 	firstRun      *core.Node
+	// optionalSharesNode is active-optional-shares, which /mvinv toggle sets.
+	optionalSharesNode *core.Node
 	// groupSpawn is the group spawn a respawn was sent to.
 	groupSpawn *plugin.Location
 }
@@ -83,6 +85,9 @@ func (m *Module) Enable(s plugin.Server) error {
 	}
 	m.store.names.load()
 	m.listen()
+	if err := m.registerCommands(); err != nil {
+		return err
+	}
 	m.dupe = newDupingPatch(m)
 	c.OnReload(func() {
 		if err := m.reload(); err != nil {

@@ -24,6 +24,22 @@ func (m *Module) configNodes() []*core.Node {
 	}
 	m.firstRun = &core.Node{Path: "first-run", Kind: core.KindBool, Default: true, Hidden: true,
 		Comments: []string{"", "", "Do not edit the following values!!!!!"}}
+	m.optionalSharesNode = &core.Node{Path: "share-handling.active-optional-shares", Kind: core.KindCustom, Hidden: true,
+		DefaultFn: func(*core.Values) any { return &Shares{} },
+		Decode: func(raw any) any {
+			if l, ok := raw.([]any); ok {
+				names := make([]string, len(l))
+				for i, e := range l {
+					names[i] = fmt.Sprint(e)
+				}
+				return SharesFromList(names)
+			}
+			return SharesFromList([]string{fmt.Sprint(raw)})
+		},
+		Encode:   func(v any) any { return v.(*Shares).Strings() },
+		OnChange: func(any, any) { m.recalculateEnabledShares() },
+		Comments: []string{"", "You must specify optional shares you wish to use here or they will be ignored.",
+			`Built-in optional shares are: "economy" and "last_location".`}}
 	return []*core.Node{
 		header("share-handling",
 			"#-----------------------------------------------------------------------------------------------------------------#",
@@ -58,22 +74,7 @@ func (m *Module) configNodes() []*core.Node {
 			"When set to true, optional shares WILL be utilized in cases where a group does not cover their uses for a world.",
 			"An example of this in action would be an ungrouped world using last_location. When this is true, players will return to their last location in that world.",
 			"When set to false, optional shares WILL NOT be utilized in these cases, effectively disabling it for ungrouped worlds."),
-		{Path: "share-handling.active-optional-shares", Kind: core.KindCustom, Hidden: true,
-			DefaultFn: func(*core.Values) any { return &Shares{} },
-			Decode: func(raw any) any {
-				if l, ok := raw.([]any); ok {
-					names := make([]string, len(l))
-					for i, e := range l {
-						names[i] = fmt.Sprint(e)
-					}
-					return SharesFromList(names)
-				}
-				return SharesFromList([]string{fmt.Sprint(raw)})
-			},
-			Encode:   func(v any) any { return v.(*Shares).Strings() },
-			OnChange: func(any, any) { m.recalculateEnabledShares() },
-			Comments: []string{"", "You must specify optional shares you wish to use here or they will be ignored.",
-				`Built-in optional shares are: "economy" and "last_location".`}},
+		m.optionalSharesNode,
 		header("sharables", "", ""),
 		b("sharables.validate-bed-anchor-respawn-location", "validate-bed-anchor-respawn-location", true,
 			"When enabled, we will validate the bed/anchor respawn location on group/world change.",

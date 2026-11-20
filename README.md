@@ -106,6 +106,17 @@ Multiverse-Inventories:
 - Multiverse-Inventories' share handling events
   (`WorldChangeShareHandlingEvent`, `GameModeChangeShareHandlingEvent`, ...)
   for other plugins to listen to and cancel
+- `/mvinv` with completion, permissions (`multiverse.inventories.*`) and
+  Multiverse-Inventories' messages: `info`, `list`, `reload`, `config`,
+  `toggle`, `create-group`, `delete-group` (with `/mv confirm`),
+  `add-worlds`, `remove-worlds`, `add-shares`, `remove-shares`,
+  `add-disabled-shares`, `remove-disabled-shares`,
+  `check-group-conflicts`, `give` (into the live or the stored inventory),
+  `cache stats` and `cache invalidate`, the `bulkedit` commands
+  (`globalprofile clear` and `modify`, `playerprofile clear`, `delete`,
+  `clone-player` and `clone-world-group`, `migrate inventory-serialization`)
+  and `help`, with the legacy aliases (`/mvinvinfo`, `/mvinvl`, ...);
+  `migrate` and `playerdata import` say the importer is not installed
 
 Multiverse-Portals:
 
@@ -151,7 +162,8 @@ Multiverse-Portals:
   then the categories `/mv purge-entities` uses are a table of vanilla
   26.3's.
 
-- **Multiverse-Inventories' commands** (`/mvinv`): being ported.
+- **`/mvinv view`, `/mvinv modify` and `/mvinv group`** (the inventory
+  menus and the group conversation): being ported.
 - **The `advancements` and `recipes` shares**: their saved data is kept in
   the player files but not switched, as golem cannot list the advancements
   or award criteria silently

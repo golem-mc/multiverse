@@ -4,7 +4,9 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
+	"time"
 
 	"github.com/golem-mc/golem/plugin"
 	"github.com/google/uuid"
@@ -70,6 +72,22 @@ func ProfileTypeNamed(name string) (ProfileType, bool) {
 	}
 	return "", false
 }
+
+// PlayerRef is a player whose profiles are read or written, online or
+// not: a plugin.Player, plugin.OfflinePlayer or Ref. MV: GlobalProfileKey
+type PlayerRef interface {
+	UUID() plugin.UUID
+	Name() string
+}
+
+// Ref is a PlayerRef by UUID and last known name.
+type Ref struct {
+	ID         plugin.UUID
+	PlayerName string
+}
+
+func (r Ref) UUID() plugin.UUID { return r.ID }
+func (r Ref) Name() string      { return r.PlayerName }
 
 // ProfileKey names one profile: a player's data for one game mode in one
 // world or group. Profiles are the same when the container, type and
@@ -157,6 +175,33 @@ type store struct {
 	profiles map[profileID]*PlayerProfile
 	globals  map[plugin.UUID]*GlobalProfile
 	names    *playerNames
+	// stats count each cache's use for /mvinv cache stats, by its name in
+	// Multiverse-Inventories: playerFileCache, profileCache, globalProfileCache.
+	stats map[string]*CacheStats
+}
+
+// CacheStats counts a cache's use. MV: Caffeine's CacheStats
+type CacheStats struct {
+	Hits, Misses, Loads, Evictions int
+	LoadTime                       time.Duration
+}
+
+func (s *store) stat(name string) *CacheStats {
+	if s.stats == nil {
+		s.stats = map[string]*CacheStats{}
+	}
+	if s.stats[name] == nil {
+		s.stats[name] = &CacheStats{}
+	}
+	return s.stats[name]
+}
+
+// loaded counts a miss and its load, which began at start.
+func (s *store) loaded(name string, start time.Time) {
+	st := s.stat(name)
+	st.Misses++
+	st.Loads++
+	st.LoadTime += time.Since(start)
 }
 
 func newStore(m *Module, dir string) *store {
@@ -173,6 +218,11 @@ func newStore(m *Module, dir string) *store {
 
 // clear forgets what was read. MV: ProfileCacheManager.clearAllCache
 func (s *store) clear() {
+	if s.files != nil {
+		s.stat("playerFileCache").Evictions += len(s.files)
+		s.stat("profileCache").Evictions += len(s.profiles)
+		s.stat("globalProfileCache").Evictions += len(s.globals)
+	}
 	s.files = map[fileID]map[string]any{}
 	s.profiles = map[profileID]*PlayerProfile{}
 	s.globals = map[plugin.UUID]*GlobalProfile{}
@@ -183,14 +233,19 @@ func (s *store) forgetPlayer(id plugin.UUID) {
 	for k := range s.files {
 		if k.player == id {
 			delete(s.files, k)
+			s.stat("playerFileCache").Evictions++
 		}
 	}
 	for k := range s.profiles {
 		if k.player == id {
 			delete(s.profiles, k)
+			s.stat("profileCache").Evictions++
 		}
 	}
-	delete(s.globals, id)
+	if _, ok := s.globals[id]; ok {
+		delete(s.globals, id)
+		s.stat("globalProfileCache").Evictions++
+	}
 }
 
 // forgetContainer drops a world's or group's profiles from memory.
@@ -199,11 +254,13 @@ func (s *store) forgetContainer(t ContainerType, name string) {
 	for k := range s.files {
 		if k.container == t && k.name == name {
 			delete(s.files, k)
+			s.stat("playerFileCache").Evictions++
 		}
 	}
 	for k := range s.profiles {
 		if k.container == t && k.name == name {
 			delete(s.profiles, k)
+			s.stat("profileCache").Evictions++
 		}
 	}
 }
@@ -222,8 +279,10 @@ func (s *store) playerFile(t ContainerType, name, player string) string {
 // fileData answers a player file's sections, reading it once.
 func (s *store) fileData(k ProfileKey) map[string]any {
 	if data, ok := s.files[k.file()]; ok {
+		s.stat("playerFileCache").Hits++
 		return data
 	}
+	defer s.loaded("playerFileCache", time.Now())
 	data := map[string]any{}
 	path := s.playerFile(k.Container, k.Name, k.PlayerName)
 	if raw, err := os.ReadFile(path); err == nil {
@@ -241,8 +300,10 @@ func (s *store) fileData(k ProfileKey) map[string]any {
 // MV: ProfileDataSource.getPlayerProfile
 func (s *store) Profile(k ProfileKey) *PlayerProfile {
 	if p, ok := s.profiles[k.id()]; ok {
+		s.stat("profileCache").Hits++
 		return p
 	}
+	defer s.loaded("profileCache", time.Now())
 	p := &PlayerProfile{ProfileData: *newProfileData(), Key: k}
 	if section, ok := s.fileData(k)[string(k.Type)].(map[string]any); ok {
 		s.decodeProfile(p, section)
@@ -318,14 +379,19 @@ func (s *store) encodeProfile(p *PlayerProfile) obj {
 	return out
 }
 
-// Save writes a profile into its player file. MV: updatePlayerProfile
+// Save writes a profile into its player file; an emptied profile's section
+// is removed. MV: updatePlayerProfile
 func (s *store) Save(p *PlayerProfile) {
 	section := s.encodeProfile(p)
-	if len(section) == 0 {
-		return
-	}
 	data := s.fileData(p.Key)
-	data[string(p.Key.Type)] = section
+	if len(section) == 0 {
+		if _, ok := data[string(p.Key.Type)]; !ok {
+			return
+		}
+		delete(data, string(p.Key.Type))
+	} else {
+		data[string(p.Key.Type)] = section
+	}
 	s.writeFile(s.playerFile(p.Key.Container, p.Key.Name, p.Key.PlayerName), data)
 }
 
@@ -389,6 +455,65 @@ func (s *store) DeleteFile(k ProfileKey) {
 	}
 }
 
+// DeleteProfiles clears profile types from a player file, removing the file
+// when they are all of them. MV: deletePlayerProfiles
+func (s *store) DeleteProfiles(k ProfileKey, types []ProfileType) {
+	if allTypes(types) {
+		s.DeleteFile(k)
+		return
+	}
+	for _, t := range types {
+		k.Type = t
+		s.DeleteProfile(k)
+	}
+}
+
+// allTypes reports whether types holds every profile type.
+func allTypes(types []ProfileType) bool {
+	return !slices.ContainsFunc(ProfileTypes(), func(t ProfileType) bool { return !slices.Contains(types, t) })
+}
+
+// forgetFile forgets what was read of a player file.
+func (s *store) forgetFile(k ProfileKey) {
+	delete(s.files, k.file())
+	for _, t := range ProfileTypes() {
+		k.Type = t
+		delete(s.profiles, k.id())
+	}
+}
+
+// CloneProfiles copies profile types from one player file to another, a
+// type the source lacks being removed from the target; with every type, the
+// file itself. MV: clonePlayerProfiles
+func (s *store) CloneProfiles(from, to ProfileKey, types []ProfileType) {
+	fromPath, toPath := s.playerFile(from.Container, from.Name, from.PlayerName), s.playerFile(to.Container, to.Name, to.PlayerName)
+	if allTypes(types) {
+		raw, err := os.ReadFile(fromPath)
+		if err != nil {
+			return
+		}
+		s.forgetFile(to)
+		err = os.MkdirAll(filepath.Dir(toPath), 0o755)
+		if err == nil {
+			err = os.WriteFile(toPath, raw, 0o644)
+		}
+		if err != nil {
+			s.m.Log.Error("Could not clone file", "from", fromPath, "to", toPath, "error", err)
+		}
+		return
+	}
+	s.forgetFile(to)
+	src, dst := s.fileData(from), s.fileData(to)
+	for _, t := range types {
+		if section, ok := src[string(t)].(map[string]any); ok && len(section) > 0 {
+			dst[string(t)] = section
+		} else {
+			delete(dst, string(t))
+		}
+	}
+	s.writeFile(toPath, dst)
+}
+
 // migrateName renames a player's files after a name change.
 // MV: FlatFileProfileDataSource.migratePlayerProfileName
 func (s *store) migrateName(id plugin.UUID, oldName, newName string) {
@@ -445,8 +570,10 @@ func (s *store) globalFile(id string) string {
 // MV: getGlobalProfile
 func (s *store) Global(id plugin.UUID, name string) *GlobalProfile {
 	if g, ok := s.globals[id]; ok {
+		s.stat("globalProfileCache").Hits++
 		return g
 	}
+	defer s.loaded("globalProfileCache", time.Now())
 	path := s.globalFile(id.String())
 	if name != "" {
 		if legacy := s.globalFile(name); legacy != path {
@@ -580,6 +707,16 @@ func (n *playerNames) save() {
 func (n *playerNames) Named(name string) (plugin.UUID, bool) {
 	id, ok := n.byName[name]
 	return id, ok
+}
+
+// All answers every player known, by name.
+func (n *playerNames) All() []PlayerRef {
+	out := make([]PlayerRef, 0, len(n.byName))
+	for name, id := range n.byName {
+		out = append(out, Ref{id, name})
+	}
+	slices.SortFunc(out, func(a, b PlayerRef) int { return strings.Compare(a.Name(), b.Name()) })
+	return out
 }
 
 // NameOf answers a player's last known name.
