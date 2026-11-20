@@ -63,6 +63,7 @@ var events = []any{
 	(*MVConfigReloadEvent)(nil), (*MVDebugModeEvent)(nil), (*MVDumpsDebugInfoEvent)(nil),
 	(*MVTeleportDestinationEvent)(nil),
 	(*MVRespawnEvent)(nil),
+	(*MVPlayerTouchedPortalEvent)(nil),
 }
 
 // Enable loads config.yml and worlds.yml, loads the worlds and registers

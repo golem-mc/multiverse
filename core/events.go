@@ -105,3 +105,21 @@ type MVRespawnEvent struct {
 	Player          plugin.Player
 	RespawnLocation plugin.Location
 }
+
+// MVPlayerTouchedPortalEvent fires when a player steps into a nether or end
+// portal, once until they leave it; a listener that denies the use bounces
+// them back. MV: MVPlayerTouchedPortalEvent
+type MVPlayerTouchedPortalEvent struct {
+	plugin.Cancellable
+	Player plugin.Player
+	// BlockTouched is the portal block's location.
+	BlockTouched plugin.Location
+	denied       bool
+}
+
+// CanUseThisPortal reports whether the player may use the portal.
+func (e *MVPlayerTouchedPortalEvent) CanUseThisPortal() bool { return !e.denied }
+
+// SetCanUseThisPortal allows or denies the portal; denied bounces the
+// player back.
+func (e *MVPlayerTouchedPortalEvent) SetCanUseThisPortal(can bool) { e.denied = !can }

@@ -14,6 +14,7 @@ requires a golem commit; move to a newer one with
 | `core/resources/` | Multiverse-Core's `multiverse-core_<lang>.properties`, unchanged | `src/main/resources` |
 | `commands/` | The `/mv` subcommands, one file per Java command class (or a few related ones) | `commands/*Command.java` |
 | `inventories/` | The `multiverse-inventories` plugin: config.yml, groups.yml, the sharables, the profile files and the share handling | Multiverse-Inventories |
+| `netherportals/` | The `multiverse-netherportals` plugin: config.yml, links.yml, `/mvnp`, the portal listeners | Multiverse-NetherPortals |
 | `internal/mvtest/` | Test harness over golem's `plugintest`, and cheap test generators (`Void`, `Floor`) | — |
 | `portals/` | The `multiverse-portals` plugin: portals.yml, config.yml, `/mvp`, the `p:` and `rp:` destinations, travel through portals and their fills | Multiverse-Portals |
 | `cmd/server/` | A server binary with every plugin built in | — |
@@ -108,3 +109,11 @@ requires a golem commit; move to a newer one with
   that dimension, and its `difficulty` and `allow-weather` act on all three.
 - `/mv modify` warns that `keep-spawn-in-memory` has no effect when it is
   set to true, not on every load as Multiverse does to the console.
+- Multiverse-NetherPortals notices a player stepping into a portal by
+  reading the block at their feet each tick, the block golem's own portal
+  tick reads, as golem has no `EntityPortalEnterEvent` yet
+  ([golem-mc/golem#117](https://github.com/golem-mc/golem/issues/117)).
+- golem treats leaving the vanilla end as a portal trip whose arrival is the
+  player's respawn point, so `handle-end-exit-respawn` acts on that
+  `EntityPortalEvent` (keeping the bed or anchor arrival when Multiverse
+  would) instead of on a respawn; with it off, golem's respawn stands.

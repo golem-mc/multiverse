@@ -16,6 +16,7 @@ Bukkit or Paper finds the same `/mv` and the same `config.yml` and
 | Multiverse-Core | `github.com/golem-mc/multiverse` | `/mv` and its world manager |
 | Multiverse-Inventories | `github.com/golem-mc/multiverse/inventories` | Separate inventories and stats per world, group and game mode |
 | Multiverse-Portals | `github.com/golem-mc/multiverse/portals` | `/mvp`: portals that send whoever walks in to a destination |
+| Multiverse-NetherPortals | `github.com/golem-mc/multiverse/netherportals` | `/mvnp`: links each world's nether and end portals to another world |
 
 Multiverse-Core:
 
@@ -172,6 +173,32 @@ Multiverse-Portals:
   `multiverse.portal.access.<portal>`, `multiverse.portal.fill.<portal>` and
   `multiverse.portal.exempt.<portal>`
 
+Multiverse-NetherPortals (the plugin `multiverse-netherportals`, which needs
+`multiverse-core`):
+
+- `config.yml` with every Multiverse-NetherPortals 5.1 option and its
+  comments, and `links.yml`; a Multiverse-NetherPortals 4 `config.yml` is
+  migrated, its `worlds.<world>.portalgoesto` links moved to `links.yml`
+- nether and end portals lead to the linked world, or to the world their
+  name links to (`world` and `world_nether`, `world_the_end`, after the
+  `portal-auto-link-when` prefixes and suffixes), scaled by the worlds'
+  `scale`; the exit portal is searched for and built in that world; a world
+  linked to itself has its portals disabled
+- entering an end world puts the player on the obsidian platform at
+  100, 49, 0, built there; leaving an end world goes to the linked world's
+  spawn, or to the player's bed or anchor (`handle-end-exit-respawn`)
+- `bounceback`, `send-disabled-portal-message`,
+  `send-no-destination-message`, `teleport-entities` and the world entry
+  checks for a player stepping into a portal, and `MVPlayerTouchedPortalEvent`
+- `/mvnp link <nether|end> [fromWorld] <toWorld>`, `/mvnp unlink` (both
+  with `--bidirectional`) and `/mvnp list [nether|end]`, with tab completion,
+  the permissions `multiverse.netherportals.link|unlink|show` and the
+  aliases `/mvnplink`, `/mvnpl`, `/mvnpunlink`, `/mvnpu`, `/mvnplist`,
+  `/mvnpli` when `show-legacy-aliases` is on
+- `/mv reload` reads its files again and `/mv dumps` uploads them; other
+  plugins (Multiverse-Portals) can claim portals they handle through
+  `netherportals.WhenLoaded` and `CustomPortals.Register`
+
 ## Not yet
 
 - Every `/mv` command not listed above; they are being ported.
@@ -204,6 +231,10 @@ Multiverse-Portals:
   them, `/mv gamerule set` sets them for one world): golem worlds share one
   set of game rules, so a rule set or reset in one world changes it in all
   ([golem-mc/golem#65](https://github.com/golem-mc/golem/issues/65)).
+- **End platform drops** (`end-platform-drop-blocks`): a block cleared for
+  the arrival platform drops its own item, not its loot, as golem has no way
+  for a plugin to break a block naturally yet
+  ([golem-mc/golem#118](https://github.com/golem-mc/golem/issues/118)).
 - **The `advancements` and `recipes` shares**: their saved data is kept in
   the player files but not switched, as golem cannot list the advancements
   or award criteria silently
@@ -233,6 +264,8 @@ Bukkit or Paper server, copy `config.yml` and `worlds.yml` from
 there. Multiverse-Portals keeps `config.yml` and
 `portals.yml` in `plugins/multiverse-portals/` (from
 `plugins/Multiverse-Portals/`).
+Multiverse-NetherPortals keeps `config.yml` and `links.yml` in
+`plugins/multiverse-netherportals/` (from `plugins/Multiverse-NetherPortals/`).
 
 ## License
 
