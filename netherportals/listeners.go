@@ -185,9 +185,6 @@ func (np *NetherPortals) checkTouching() {
 func (np *NetherPortals) touched(p plugin.Player, t LinkType, block plugin.BlockPos) {
 	w := p.World()
 	at := plugin.Location{World: w, Pos: plugin.Vec3{X: float64(block.X), Y: float64(block.Y), Z: float64(block.Z)}}
-	if np.CustomPortals.Handled(p, at) {
-		return
-	}
 	e := &core.MVPlayerTouchedPortalEvent{Player: p, BlockTouched: at}
 	np.core.Fire(e)
 	if e.Cancelled() {
@@ -195,6 +192,9 @@ func (np *NetherPortals) touched(p plugin.Player, t LinkType, block plugin.Block
 	}
 	if !e.CanUseThisPortal() {
 		np.bounceAndForget(p, block, t)
+	}
+	if np.CustomPortals.Handled(p, at) {
+		return
 	}
 	if last, ok := np.bounced[p.Name()]; ok {
 		if time.Since(last) < bounceCooldown {

@@ -135,6 +135,7 @@ func (p *Portals) listen() {
 			}
 		}
 	})
+	plugin.Listen(s, p.onTouchedPortal)
 	plugin.Listen(s, func(e *plugin.PlayerQuitEvent) { delete(p.sessions, e.Player.UUID()) })
 	plugin.Listen(s, p.onInteract, plugin.ListenOptions{Priority: plugin.Low, IgnoreCancelled: true})
 }
@@ -156,5 +157,18 @@ func (p *Portals) onInteract(e *plugin.PlayerInteractEvent) {
 		e.SetCancelled(p.Session(e.Player).SetLeft(e.Block.Pos, w))
 	case plugin.RightClickBlock:
 		e.SetCancelled(p.Session(e.Player).SetRight(e.Block.Pos, w))
+	}
+}
+
+// onTouchedPortal denies a nether or end portal block that belongs to a
+// portal the player may not use, with the portal's message.
+// MV: MVPCoreListener.onPlayerTouchedPortal
+func (p *Portals) onTouchedPortal(e *core.MVPlayerTouchedPortalEvent) {
+	pt, ok := p.Manager.At(e.BlockTouched)
+	if !ok {
+		return
+	}
+	if canUse, _ := p.checkUse(pt, e.Player); !canUse {
+		e.SetCanUseThisPortal(false)
 	}
 }

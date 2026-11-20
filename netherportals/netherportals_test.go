@@ -377,3 +377,34 @@ func TestNetherPortalTravel(t *testing.T) {
 		}
 	})
 }
+
+// A Multiverse-Portals portal built in a nether portal block asks
+// Multiverse-Portals first: a player without its access permission is
+// bounced back.
+func TestPortalsDenyTouchingItsPortal(t *testing.T) {
+	env, _ := start(t, nil)
+	bob := env.Join("Bob", false)
+	floor := handle(t, env, "floor")
+	portal, _ := plugin.DefaultState(registry.BlockNetherPortal).With(registry.PropAxis, "x")
+	env.Sync(func() {
+		bob.Handle().Teleport(plugin.Location{World: floor, Pos: plugin.Vec3{X: 8.5, Y: 4, Z: 6.5}}, plugin.TeleportPlugin)
+	})
+	env.Srv.RunTicks(3)
+	env.Sync(func() {
+		floor.SetBlockState(plugin.BlockPos{X: 8, Y: 4, Z: 8}, portal, 0)
+		floor.SetBlockState(plugin.BlockPos{X: 9, Y: 4, Z: 8}, portal, 0)
+		mvp, _ := portals.Get()
+		w, _ := env.MV.Worlds.Of(floor)
+		mvp.Manager.Create("gate", "Alice", portals.NewRegion(w, plugin.Vec3{X: 8, Y: 4, Z: 8}, plugin.Vec3{X: 9, Y: 4, Z: 8}))
+	})
+	bob.Messages(2)
+	env.Sync(func() {
+		bob.Handle().Teleport(plugin.Location{World: floor, Pos: plugin.Vec3{X: 8.5, Y: 4, Z: 8.3}}, plugin.TeleportPlugin)
+	})
+	env.Srv.RunTicks(3)
+	env.Sync(func() {
+		if z := bob.Handle().Pos().Z; z > 8 {
+			t.Errorf("Bob was not bounced back north: z %v", z)
+		}
+	})
+}

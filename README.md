@@ -202,11 +202,6 @@ Multiverse-NetherPortals (the plugin `multiverse-netherportals`, which needs
 ## Not yet
 
 - Every `/mv` command not listed above; they are being ported.
-- **The Multiverse 4 aliases of `/mvp`** (`/mvpc`, `/mvpl`, ...) and
-  **Multiverse-NetherPortals asking Portals whether a player may use a
-  portal** (`MVPlayerTouchedPortalEvent`): both need Multiverse-Core
-  changes that come with the NetherPortals port
-  ([#13](https://github.com/golem-mc/multiverse/pull/13)).
 - **Vehicles and mobs walking into a portal** (`teleport-vehicles`, and
   `teleport-entities` outside a nether portal fill): golem fires no event
   when a vehicle or mob moves
