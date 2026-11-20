@@ -122,3 +122,15 @@ func TestWorldRef(t *testing.T) {
 		}
 	}
 }
+
+// A seed that is not a number hashes as Java's String.hashCode.
+func TestParseSeed(t *testing.T) {
+	for in, want := range map[string]int64{"42": 42, "-5": -5, "abc": 96354, "Multiverse": -1031087172, "é😀": 1996812} {
+		if got := ParseSeed(in); got != want {
+			t.Errorf("ParseSeed(%q) = %d, want %d", in, got, want)
+		}
+	}
+	if ParseSeed("") == 0 {
+		t.Error("a random seed is 0")
+	}
+}

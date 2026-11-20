@@ -50,3 +50,8 @@ requires a golem commit; move to a newer one with
   no UUID.
 - `/mv help` lists the subcommands as ACF does, in a format close to but not
   exactly ACF's.
+- `/mv delete` and `/mv regen` refuse the vanilla overworld, nether and end,
+  which golem cannot unload. A clone copies a world's own folder (for the
+  overworld, `dimensions/minecraft/overworld`, not the level directory) but
+  not golem's `data/plugin_world.dat`; the copy takes the source's seed and,
+  unless `--reset-world-config`, its spawn from `worlds.yml`.

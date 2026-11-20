@@ -29,6 +29,13 @@ Multiverse-Core:
   `/mv confirm`, `/mv help`, `/mv version`, with their flags (`--page`,
   `--filter`, `--raw`), tab completion and the Multiverse 4 aliases
   (`/mvlist`, `/mvinfo`, ...) when `show-legacy-aliases` is on
+- `/mv create`, `/mv import`, `/mv load`, `/mv unload`, `/mv remove`,
+  `/mv delete`, `/mv clone` and `/mv regen`, with their flags (`--seed`,
+  `--generator`, `--properties`, `--force-spawn-position`,
+  `--remove-players [destination]`, `--no-save`, `--keep-files`, ...), the
+  `/mv confirm` step for delete and regen, and tab completion of unknown
+  world folders for import
+- the world (`w:`) destination for `--remove-players`
 - the permission nodes `multiverse.core.*`, and per world
   `multiverse.access.<world>`, `multiverse.exempt.<world>`,
   `mv.bypass.gamemode.<world>`, `mv.bypass.playerlimit.<world>` and
@@ -47,6 +54,15 @@ Multiverse-Core:
   plugin to offer generators by name yet
   ([golem-mc/golem#67](https://github.com/golem-mc/golem/issues/67)). Until
   then a generator plugin can call `core.RegisterGenerator` from its `init`.
+
+- **World types and creation options** (`/mv create --world-type flat`,
+  `large_biomes`, `amplified`, `--no-structures`, `--biome`,
+  `--generator-settings`, `--generate-bonus-chest`): golem cannot make such a
+  plugin world yet ([golem-mc/golem#66](https://github.com/golem-mc/golem/issues/66));
+  the command says so instead of making a different world.
+- **Game rules per world** (`/mv clone` and `/mv regen` keep or reset
+  them): golem worlds share one set of game rules
+  ([golem-mc/golem#65](https://github.com/golem-mc/golem/issues/65)).
 
 ## Installing
 
