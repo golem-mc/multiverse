@@ -189,12 +189,30 @@ var (
 		},
 		encode: encodeLocation, decode: decodeLocation})
 
-	// Economy needs an economy service (golem-mc/vault): until one exists
-	// it warns as Multiverse-Inventories does without Vault.
+	// Economy is the balance in golem-mc/vault's economy service; without
+	// one it warns as Multiverse-Inventories does without Vault.
 	Economy = register(&Sharable{names: []string{"economy", "money", "econ", "cash", "balance"},
 		optional: true, fileTag: "balance",
-		read:   func(m *Module, _ *Sharable, _ plugin.Player, _ *ProfileData) { m.warnNoEconomy() },
-		apply:  func(m *Module, _ *Sharable, _ plugin.Player, _ *ProfileData) bool { m.warnNoEconomy(); return false },
+		read: func(m *Module, s *Sharable, p plugin.Player, d *ProfileData) {
+			if eco, ok := m.economy(); ok {
+				d.Set(s, eco.Balance(p.UUID()))
+			}
+		},
+		apply: func(m *Module, s *Sharable, p plugin.Player, d *ProfileData) bool {
+			eco, ok := m.economy()
+			if !ok {
+				return false
+			}
+			money, ok := d.Get(s).(float64)
+			// MV: MVEconomist.setBalance, withdrawing the balance and depositing the new one
+			switch cur := eco.Balance(p.UUID()); {
+			case money > cur:
+				eco.Deposit(p.UUID(), money-cur)
+			case money < cur:
+				eco.Withdraw(p.UUID(), cur-money)
+			}
+			return ok
+		},
 		encode: encodeStat, decode: decodeDouble})
 
 	Potions = register(&Sharable{names: []string{"potion_effects", "potion", "potions"}, fileTag: "potions",
@@ -211,15 +229,20 @@ var (
 		},
 		encode: encodeEffects, decode: decodeEffects})
 
-	// Advancements, GameStatistics and Recipes are kept in the profile
-	// files but not yet read from or applied to players: see the README.
+	// Advancements and Recipes are kept in the profile files but not read
+	// from or applied to players: see the README.
 	Advancements = register(&Sharable{names: []string{"advancements", "achievements"}, optional: true,
 		fileTag: "advancements", read: keepProfile, apply: hasValue,
 		encode: identity, decode: decodeRaw})
 
 	GameStatistics = register(&Sharable{names: []string{"game_statistics"}, fileTag: "game_statistics",
-		read: keepProfile, apply: hasValue,
-		encode: identity, decode: decodeRaw})
+		read: func(_ *Module, s *Sharable, p plugin.Player, d *ProfileData) { d.Set(s, readStats(p)) },
+		apply: func(m *Module, s *Sharable, p plugin.Player, d *ProfileData) bool {
+			saved, ok := d.Get(s).(map[string]any)
+			m.applyStats(p, saved)
+			return ok
+		},
+		encode: encodeStats, decode: decodeStats})
 
 	Recipes = register(&Sharable{names: []string{"recipes"}, optional: true, fileTag: "recipes",
 		read: keepProfile, apply: hasValue,

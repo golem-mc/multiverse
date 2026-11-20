@@ -16,6 +16,7 @@ import (
 	"github.com/golem-mc/golem/plugin"
 	"github.com/golem-mc/golem/registry"
 	"github.com/golem-mc/multiverse/core"
+	"github.com/golem-mc/vault"
 )
 
 // Version is the Multiverse-Inventories release this port follows.
@@ -25,7 +26,7 @@ const Version = "5.3.0"
 var resources embed.FS
 
 func init() {
-	plugin.Register("multiverse-inventories", &Module{}, plugin.Depends("multiverse-core"))
+	plugin.Register("multiverse-inventories", &Module{}, plugin.Depends("multiverse-core"), plugin.SoftDepends("vault"))
 }
 
 // Module is the running Multiverse-Inventories. MV: MultiverseInventories
@@ -45,6 +46,7 @@ type Module struct {
 	economyWarned bool
 	dupe          *dupingPatch
 	firstRun      *core.Node
+	conversations *conversations
 	// optionalSharesNode is active-optional-shares, which /mvinv toggle sets.
 	optionalSharesNode *core.Node
 	// groupSpawn is the group spawn a respawn was sent to.
@@ -85,6 +87,9 @@ func (m *Module) Enable(s plugin.Server) error {
 	}
 	m.store.names.load()
 	m.listen()
+	m.listenMenus()
+	m.conversations = newConversations(m)
+	c.Destinations.Register(&lastLocationType{m})
 	if err := m.registerCommands(); err != nil {
 		return err
 	}
@@ -299,6 +304,16 @@ func (m *Module) applyBedSpawn(p plugin.Player, v any) bool {
 	}
 	p.SetRespawnPoint(&loc, true)
 	return true
+}
+
+// economy answers the vault economy, warning once when there is none.
+// MV: Sharables.ECONOMY.hasValidEconomyHandler
+func (m *Module) economy() (vault.Economy, bool) {
+	eco, ok := vault.LookupEconomy(m.Server)
+	if !ok {
+		m.warnNoEconomy()
+	}
+	return eco, ok
 }
 
 // warnNoEconomy says once that the economy sharable cannot work.
