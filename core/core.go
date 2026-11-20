@@ -23,13 +23,14 @@ var Authors = []string{"dumptruckman", "Rigby", "fernferret", "lithium3141", "ma
 
 // Core is the running Multiverse-Core. MV: MultiverseCore, MultiverseCoreApi
 type Core struct {
-	Server      plugin.Server
-	Log         *plugin.Logger
-	Config      *Config
-	Worlds      *Worlds
-	Locales     *Locales
-	Commands    *Commands
-	Permissions *Permissions
+	Server       plugin.Server
+	Log          *plugin.Logger
+	Config       *Config
+	Worlds       *Worlds
+	Locales      *Locales
+	Commands     *Commands
+	Permissions  *Permissions
+	Destinations *Destinations
 
 	levelName string
 	// worldFolder overrides where a world's files are, for tests.
@@ -77,6 +78,7 @@ func Enable(s plugin.Server) (*Core, error) {
 	}
 	c.applyConfig()
 	c.Permissions = newPermissions(c)
+	c.Destinations = newDestinations(c)
 	c.Commands = newCommands(c)
 	c.Worlds = newWorlds(c, s.DataDir())
 	c.listenWorlds()

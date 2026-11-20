@@ -81,7 +81,30 @@ func Start(t *testing.T, files map[string]string, opts ...plugintest.Option) *En
 	if !ok {
 		t.Fatal("multiverse-core did not enable")
 	}
+	if _, ok := c.Server.(interface{ WorldFolder(plugin.Key) string }); !ok {
+		pointWorldFolders(c, filepath.Dir(dir))
+	}
 	return &Env{T: t, Srv: srv, MV: c, Dir: dir, DataDir: data}
+}
+
+// pointWorldFolders makes c find worlds in the test server's level
+// directory, the sibling temp dir holding level.dat, until golem answers a
+// world's folder itself (golem-mc/golem#63).
+func pointWorldFolders(c *core.Core, parent string) {
+	entries, _ := os.ReadDir(parent)
+	for _, e := range entries {
+		level := filepath.Join(parent, e.Name())
+		if _, err := os.Stat(filepath.Join(level, "level.dat")); err != nil {
+			continue
+		}
+		c.SetWorldFolderFunc(func(k plugin.Key) string {
+			if k == plugin.MinecraftKey("overworld") {
+				return level
+			}
+			return filepath.Join(level, "dimensions", k.Namespace, k.Path)
+		})
+		return
+	}
 }
 
 // Sync runs fn on the tick goroutine and returns once it has run.

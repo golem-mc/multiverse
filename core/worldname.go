@@ -132,19 +132,58 @@ func (c *Core) LevelName() string {
 }
 
 // WorldFolder answers the directory a world's files live in, whether or not
-// it is loaded: <level>/dimensions/<namespace>/<path>, as golem lays a
-// dimension out. MV: WorldFolderResolver
+// it is loaded. A golem without plugin.Server.WorldFolder (golem-mc/golem#63)
+// gets <level>/dimensions/<namespace>/<path>, as golem lays a dimension out.
+// MV: WorldFolderResolver
 func (c *Core) WorldFolder(key plugin.Key) string {
 	if c.worldFolder != nil {
 		return c.worldFolder(key)
 	}
+	if s, ok := c.Server.(interface{ WorldFolder(plugin.Key) string }); ok {
+		return s.WorldFolder(key)
+	}
+	if key == plugin.MinecraftKey("overworld") {
+		return c.LevelName()
+	}
 	return filepath.Join(c.LevelName(), "dimensions", key.Namespace, key.Path)
+}
+
+// PotentialWorlds answers the names of world folders Multiverse does not
+// know, for /mv import. MV: WorldManager.getPotentialWorlds
+func (c *Core) PotentialWorlds() []string {
+	root := filepath.Join(c.WorldFolder(plugin.MinecraftKey("overworld")), "dimensions")
+	namespaces, _ := os.ReadDir(root)
+	var out []string
+	for _, ns := range namespaces {
+		paths, _ := os.ReadDir(filepath.Join(root, ns.Name()))
+		for _, p := range paths {
+			key := plugin.Key{Namespace: ns.Name(), Path: p.Name()}
+			if !p.IsDir() || !c.HasWorldFolder(key) {
+				continue
+			}
+			ref := c.RefOfKey(key)
+			if _, known := c.Worlds.byRef(ref); !known {
+				out = append(out, ref.Name)
+			}
+		}
+	}
+	return out
+}
+
+// storageFolder answers where a world's chunks and saved data are: its
+// folder, but for the overworld, whose folder is the level directory,
+// <level>/dimensions/minecraft/overworld.
+func (c *Core) storageFolder(key plugin.Key) string {
+	if key == plugin.MinecraftKey("overworld") {
+		return filepath.Join(c.WorldFolder(key), "dimensions", "minecraft", "overworld")
+	}
+	return c.WorldFolder(key)
 }
 
 // HasWorldFolder reports whether a world's folder holds a world: a region or
 // data folder. MV: WorldNameChecker.checkFolder
 func (c *Core) HasWorldFolder(key plugin.Key) bool {
-	dir := c.WorldFolder(key)
+	dir := c.storageFolder(key)
 	for _, sub := range []string{"region", "data", "entities"} {
 		if st, err := os.Stat(filepath.Join(dir, sub)); err == nil && st.IsDir() {
 			return true
