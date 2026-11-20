@@ -215,9 +215,6 @@ Multiverse-NetherPortals (the plugin `multiverse-netherportals`, which needs
   when a block next to them changes: golem's portal collapse does not ask
   `BlockPhysicsEvent`, which Portals cancels to keep them
   ([golem-mc/golem#143](https://github.com/golem-mc/golem/issues/143)).
-- **Cancelling a nether portal trip** to run a portal's action still leaves
-  the exit portal golem built at the other end
-  ([golem-mc/golem#68](https://github.com/golem-mc/golem/issues/68)).
 - **WorldEdit selections for `/mvp create`**: golem's WorldEdit
   (golem-mc/worldedit) offers a player's selection only through its
   `core.API` service, and importing that package would build WorldEdit and
