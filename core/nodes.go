@@ -307,11 +307,19 @@ func FormatValue(val any) string {
 	return fmt.Sprint(val)
 }
 
-// JavaDouble formats f as Java's Double.toString does for ordinary
-// magnitudes: always with a decimal point.
+// JavaDouble formats f as Java's Double.toString does: always with a
+// decimal point, and as 1.5E7 below 10^-3 and from 10^7.
 func JavaDouble(f float64) string {
 	if math.IsInf(f, 0) || math.IsNaN(f) {
 		return strconv.FormatFloat(f, 'g', -1, 64)
+	}
+	if a := math.Abs(f); a != 0 && (a < 1e-3 || a >= 1e7) {
+		mant, exp, _ := strings.Cut(strconv.FormatFloat(f, 'E', -1, 64), "E")
+		if !strings.Contains(mant, ".") {
+			mant += ".0"
+		}
+		e, _ := strconv.Atoi(exp)
+		return mant + "E" + strconv.Itoa(e)
 	}
 	s := strconv.FormatFloat(f, 'f', -1, 64)
 	if !strings.Contains(s, ".") {

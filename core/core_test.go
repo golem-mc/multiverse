@@ -134,3 +134,12 @@ func TestParseSeed(t *testing.T) {
 		t.Error("a random seed is 0")
 	}
 }
+
+func TestJavaDouble(t *testing.T) {
+	for f, want := range map[float64]string{0: "0.0", 1: "1.0", -2.5: "-2.5", 9999999: "9999999.0",
+		5.9999968e7: "5.9999968E7", 1e7: "1.0E7", 0.001: "0.001", 0.0001: "1.0E-4", -1.25e-5: "-1.25E-5"} {
+		if got := JavaDouble(f); got != want {
+			t.Errorf("JavaDouble(%v) = %q, want %q", f, got, want)
+		}
+	}
+}

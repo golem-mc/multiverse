@@ -57,7 +57,7 @@ var events = []any{
 	(*MVWorldLoadedEvent)(nil), (*MVWorldUnloadedEvent)(nil), (*MVWorldCreatedEvent)(nil),
 	(*MVWorldImportedEvent)(nil), (*MVWorldRemovedEvent)(nil), (*MVWorldDeleteEvent)(nil),
 	(*MVWorldClonedEvent)(nil), (*MVWorldRegeneratedEvent)(nil), (*MVWorldPropertyChangedEvent)(nil),
-	(*MVConfigReloadEvent)(nil), (*MVDebugModeEvent)(nil),
+	(*MVConfigReloadEvent)(nil), (*MVDebugModeEvent)(nil), (*MVDumpsDebugInfoEvent)(nil),
 }
 
 // Enable loads config.yml and worlds.yml, loads the worlds and registers

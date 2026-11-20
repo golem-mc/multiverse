@@ -72,3 +72,27 @@ type MVDebugModeEvent struct {
 	plugin.Base
 	Level int
 }
+
+// MVDumpsDebugInfoEvent fires when /mv dumps gathers its files; a module
+// adds its own with PutDetailedDebugInfo.
+type MVDumpsDebugInfoEvent struct {
+	plugin.Base
+	files []DumpFile
+}
+
+// DumpFile is one file /mv dumps uploads.
+type DumpFile struct{ Name, Contents string }
+
+// PutDetailedDebugInfo adds a file, or replaces the one named name.
+func (e *MVDumpsDebugInfoEvent) PutDetailedDebugInfo(name, contents string) {
+	for i := range e.files {
+		if e.files[i].Name == name {
+			e.files[i].Contents = contents
+			return
+		}
+	}
+	e.files = append(e.files, DumpFile{name, contents})
+}
+
+// DetailedDebugInfo answers the files in the order they were added.
+func (e *MVDumpsDebugInfoEvent) DetailedDebugInfo() []DumpFile { return e.files }

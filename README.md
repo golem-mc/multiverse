@@ -21,7 +21,8 @@ Multiverse-Core:
   Multiverse 4 `config.yml` is migrated
 - `worlds.yml` with every world property, read from a Bukkit server's file
   (worlds named by name or by namespaced key) and written back in the same
-  form
+  form; a Multiverse 4 `worlds.yml` (kept as `worlds.yml.old.<time>`) and
+  world sections of versions 1.0 to 1.2 are migrated
 - the vanilla worlds are imported as `world`, `world_nether` and
   `world_the_end` (after `level-name`), worlds made by other plugins too;
   worlds with `auto-load` load on start
@@ -36,6 +37,14 @@ Multiverse-Core:
   `/mv confirm` step for delete and regen, and tab completion of unknown
   world folders for import
 - the world (`w:`) destination for `--remove-players`
+- `/mv coordinates`, `/mv dumps` (`--upload pastesdev|mclogs`, with
+  `MVDumpsDebugInfoEvent` for modules to add files),
+  `/mv entity-spawn-config info|modify`, `/mv gamerule set|reset|list`,
+  `/mv generators list|info`, `/mv meta info|modify`, `/mv purge-entities`,
+  `/mv purge-all-entities [spawn-categories]`, `/mv who`, `/mv whoall` and
+  `/mv worldborder add|center|damage amount|damage buffer|get|set|warning
+  distance|warning time`, with their Multiverse 4 aliases (`/mvrule`,
+  `/mvrules`, `/mvwho`, `/mvw`, `/mvwhoall`, `/mvgens`, `/mvco`, ...)
 - the permission nodes `multiverse.core.*`, and per world
   `multiverse.access.<world>`, `multiverse.exempt.<world>`,
   `mv.bypass.gamemode.<world>`, `mv.bypass.playerlimit.<world>` and
@@ -61,8 +70,16 @@ Multiverse-Core:
   plugin world yet ([golem-mc/golem#66](https://github.com/golem-mc/golem/issues/66));
   the command says so instead of making a different world.
 - **Game rules per world** (`/mv clone` and `/mv regen` keep or reset
-  them): golem worlds share one set of game rules
+  them, `/mv gamerule set` sets them for one world): golem worlds share one
+  set of game rules, so a rule set or reset in one world changes it in all
   ([golem-mc/golem#65](https://github.com/golem-mc/golem/issues/65)).
+- **Spawn tick rates and limits** (`spawning.<category>.tick-rate` and
+  `spawn-limit`, set with `/mv entity-spawn-config modify`): kept in
+  `worlds.yml` but not applied, as golem has no per-world spawn rates or
+  limits and no entity spawn categories yet
+  ([golem-mc/golem#70](https://github.com/golem-mc/golem/issues/70)); until
+  then the categories `/mv purge-entities` uses are a table of vanilla
+  26.3's.
 
 ## Installing
 
