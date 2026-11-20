@@ -1,246 +1,8 @@
 # Multiverse for golem
 
-An unofficial port of [Multiverse](https://github.com/Multiverse) to
-[golem](https://github.com/golem-mc/golem), the Minecraft: Java Edition server written in Go.
-It is not made or endorsed by the Multiverse Team.
+An unofficial port of [Multiverse](https://github.com/Multiverse) (Core, Inventories, Portals and NetherPortals) to [golem](https://github.com/golem-mc/golem). It is not made or endorsed by the Multiverse Team.
 
-It keeps Multiverse-Core 5's commands, permission nodes, messages (in all of
-Multiverse's languages) and configuration files, so an admin coming from
-Bukkit or Paper finds the same `/mv` and the same `config.yml` and
-`worlds.yml`.
-
-## What's included
-
-| Plugin | Package | What it does |
-|---|---|---|
-| Multiverse-Core | `github.com/golem-mc/multiverse` | `/mv` and its world manager |
-| Multiverse-Inventories | `github.com/golem-mc/multiverse/inventories` | Separate inventories and stats per world, group and game mode |
-| Multiverse-Portals | `github.com/golem-mc/multiverse/portals` | `/mvp`: portals that send whoever walks in to a destination |
-| Multiverse-NetherPortals | `github.com/golem-mc/multiverse/netherportals` | `/mvnp`: links each world's nether and end portals to another world |
-
-Multiverse-Core:
-
-- `config.yml` with every Multiverse-Core 5.8 option and its comments; a
-  Multiverse 4 `config.yml` is migrated
-- `worlds.yml` with every world property, read from a Bukkit server's file
-  (worlds named by name or by namespaced key) and written back in the same
-  form; a Multiverse 4 `worlds.yml` (kept as `worlds.yml.old.<time>`) and
-  world sections of versions 1.0 to 1.2 are migrated
-- the vanilla worlds are imported as `world`, `world_nether` and
-  `world_the_end` (after `level-name`), worlds made by other plugins too;
-  worlds with `auto-load` load on start
-- `/mv list`, `/mv info`, `/mv config`, `/mv debug`, `/mv reload`,
-  `/mv confirm`, `/mv help`, `/mv version`, with their flags (`--page`,
-  `--filter`, `--raw`), tab completion and the Multiverse 4 aliases
-  (`/mvlist`, `/mvinfo`, ...) when `show-legacy-aliases` is on
-- world types (`normal`, `flat`, `large_biomes`, `amplified`), flat
-  `--generator-settings`, single-biome worlds (`--biome`) and
-  `--no-structures`; generators by plugin name (`-g Plugin[:id]`) from any
-  golem plugin that publishes them (`plugin.GeneratorProvider`; it should
-  load before `multiverse-core` so `auto-load` worlds find it)
-- `/mv create`, `/mv import`, `/mv load`, `/mv unload`, `/mv remove`,
-  `/mv delete`, `/mv clone` and `/mv regen`, with their flags (`--seed`,
-  `--generator`, `--properties`, `--force-spawn-position`,
-  `--remove-players [destination]`, `--no-save`, `--keep-files`, ...), the
-  `/mv confirm` step for delete and regen, and tab completion of unknown
-  world folders for import
-- the world (`w:`) destination for `--remove-players`
-- `/mv coordinates`, `/mv dumps` (`--upload pastesdev|mclogs`, with
-  `MVDumpsDebugInfoEvent` for modules to add files),
-  `/mv entity-spawn-config info|modify`, `/mv gamerule set|reset|list`,
-  `/mv generators list|info`, `/mv meta info|modify`, `/mv purge-entities`,
-  `/mv purge-all-entities [spawn-categories]`, `/mv who`, `/mv whoall` and
-  `/mv worldborder add|center|damage amount|damage buffer|get|set|warning
-  distance|warning time`, with their Multiverse 4 aliases (`/mvrule`,
-  `/mvrules`, `/mvwho`, `/mvw`, `/mvwhoall`, `/mvgens`, `/mvco`, ...)
-- `/mv teleport` (`/mvtp`), `/mv spawn`, `/mv setspawn`, `/mv check` and
-  `/mv anchor set|delete|list` with `anchors.yml`; every destination type
-  (`w:`, `e:`, `pl:`, `a:`, `b:`, `ca:`), the safe-location search,
-  `--unsafe`, `--silent`, passenger modes, `use-finer-teleport-permissions`
-  and `concurrent-teleport-limit`
-- world entry checks on teleports and portals: `enforce-access`,
-  `player-limit`, `world-blacklist` and entry fees in items or, with
-  `@vault-economy`, through [golem-mc/vault](https://github.com/golem-mc/vault)'s
-  `vault.Economy` from whichever economy plugin provides it (charged, or paid
-  out when negative), with `teleport-intercept`; `join-destination` and
-  `first-spawn-override` on join
-- `/mv modify` (`/mvmodify`, `/mvm`): `set`, `add`, `remove` and `reset`
-  of every world property, with completion of the properties per action
-  and of their values, and the alias conflict warning
-- the world properties applied to the server: `gamemode` and
-  `allow-flight` (on join, on changing worlds, after
-  `gamemode-and-flight-enforce-delay`, with `enforce-gamemode`,
-  `enforce-flight` and `mv.bypass.gamemode.<world>`), `respawn-world`,
-  `bed-respawn`, `anchor-respawn` and the `spawn` section's respawn options
-  (with `MVRespawnEvent`), `hunger`, `auto-heal`, `pvp`, the `spawning`
-  section per category (`spawn`, `exceptions`, `tick-rate` and
-  `spawn-limit`, with `apply-entity-spawn-rate` and
-  `apply-entity-spawn-limit`, and the removal of forbidden entities as their
-  chunk loads), `difficulty`, `allow-weather`, `allow-advancement-grant`,
-  `portal-form`, `spawn-location`, the portal search radius
-  (`use-custom-portal-search`, `custom-portal-search-radius`) and the world
-  alias chat prefix (`enable-chat-prefix`, `chat-prefix-format`)
-- the permission nodes `multiverse.core.*`, and per world
-  `multiverse.access.<world>`, `multiverse.exempt.<world>`,
-  `mv.bypass.gamemode.<world>`, `mv.bypass.playerlimit.<world>` and
-  `multiverse.core.spawn[.self|.other].<world>`, each with its
-  `prefix.*` wildcard
-- Multiverse's events (`MVWorldLoadedEvent`, `MVWorldPropertyChangedEvent`,
-  ...) for other plugins to listen to
-
-Multiverse-Inventories:
-
-- `config.yml` with every Multiverse-Inventories 5 option and its comments,
-  and `groups.yml`; an older `config.yml` is migrated, its groups moving to
-  `groups.yml`; on the first run a `default` group of the vanilla worlds
-  sharing everything is made
-- groups of worlds by name, wildcard (`world_*`) or regex (`r=...`), with
-  `shares`, `disabled-shares` and a respawn `spawn` world and priority;
-  conflicting groups are reported on start
-- the player's data is saved and switched on world change, on game mode
-  change with `enable-gamemode-share-handling`, on join with
-  `apply-playerdata-on-join`, on quit and on respawn in another world, with
-  `default-ungrouped-worlds`, `use-optionals-for-ungrouped-worlds`,
-  `always-write-world-profile` and the bypass permissions
-  `mvinv.bypass.world.<world>`, `mvinv.bypass.group.<group>` and
-  `mvinv.bypass.gamemode.<mode>` (with `enable-bypass-permissions`)
-- the shares `inventory_contents`, `armor_contents`, `off_hand`,
-  `ender_chest`, `hit_points`, `max_hit_points`, `food_level`, `saturation`,
-  `exhaustion`, `xp`, `lvl`, `total_xp`, `remaining_air`, `maximum_air`,
-  `fall_distance`, `fire_ticks`, `potion_effects`, `game_statistics`
-  (saved under Bukkit's statistic names), `bed_spawn` (validated
-  with `validate-bed-anchor-respawn-location`), the optional
-  `last_location` (with `apply-last-location-for-all-teleports` and
-  `reset-last-location-on-death`) and the optional `economy` (the
-  balance, through golem-mc/vault's economy service), their groups
-  (`inventory`, `stats`, `hunger`, `all`, ...) and other names
-- the player files in Multiverse-Inventories' layout and JSON format:
-  `worlds/<world>/<player>.json` and `groups/<group>/<player>.json` with
-  one section per game mode, `players/<uuid>.json` and `playernames.json`;
-  files from a Bukkit or Paper server are read, and a player who changed
-  their name keeps their files
-- items and inventory holders cannot go through portals between worlds
-  that do not share inventories; creative inventory changes are refused
-  for a few ticks after a world change, against item duping
-- Multiverse-Inventories' share handling events
-  (`WorldChangeShareHandlingEvent`, `GameModeChangeShareHandlingEvent`, ...)
-  for other plugins to listen to and cancel
-- `/mvinv` with completion, permissions (`multiverse.inventories.*`) and
-  Multiverse-Inventories' messages: `info`, `list`, `reload`, `config`,
-  `toggle`, `create-group`, `delete-group` (with `/mv confirm`),
-  `add-worlds`, `remove-worlds`, `add-shares`, `remove-shares`,
-  `add-disabled-shares`, `remove-disabled-shares`,
-  `check-group-conflicts`, `give` (into the live or the stored inventory),
-  `cache stats` and `cache invalidate`, the `bulkedit` commands
-  (`globalprofile clear` and `modify`, `playerprofile clear`, `delete`,
-  `clone-player` and `clone-world-group`, `migrate inventory-serialization`)
-  and `help`, with the legacy aliases (`/mvinvinfo`, `/mvinvl`, ...);
-  `migrate` and `playerdata import` say the importer is not installed
-- `/mvinv view` and `/mvinv modify`: a player's live or stored inventory,
-  armour, off hand and stats in a menu, read-only or saved back when it
-  closes; `/mvinv group` (`/mvinvg`) builds or edits a group by chat
-- the `ll:<world>` destination (`/mv tp ll:world`): where the player last
-  was in that world
-
-Multiverse-Portals:
-
-- `config.yml` with every Multiverse-Portals 5.3 option and its comments, and
-  `portals.yml` with every portal property; Multiverse-Portals 4 files are
-  migrated
-- `/mvp create`, `/mvp list`, `/mvp info`, `/mvp modify`, `/mvp select`,
-  `/mvp remove`, `/mvp wand`, `/mvp debug` and `/mvp config`, with tab
-  completion
-- selecting a portal's box with the wand (`wand-material`, a wooden pickaxe
-  by default): left click the first corner, right click the second
-- the `multiverse-destination`, `command` (`op:`, `console:`, `%player%`,
-  `%world%`) and `server` (BungeeCord) action types
-- the `p:<portal>[:<direction>]` and `rp:<portal>,...` destinations
-- walking into a portal (`use-on-move`) sends a player through its action,
-  with `enforce-portal-access` and its no-permission message, the portal's
-  entry fee (`entry-fee.price`, in the `entry-fee.currency` item or, when
-  that is unset, through golem-mc/vault's `vault.Economy`;
-  `multiverse.portal.exempt.<portal>`), its success message,
-  `portal-cooldown`, and the `/mvp debug` info instead
-- portals filled with nether portal blocks by flint and steel inside a frame
-  of `frame-materials`, and with water or lava by a bucket
-  (`bucket-filling`, `multiverse.portal.fill.<portal>`); a nether portal trip
-  through one runs the portal's action instead (`nether-animation`,
-  `portals-default-to-nether`, `teleport-entities` for mobs and items with
-  `teleport-non-players`); fluids do not flow into a portal
-- `MVPortalEvent`, fired before a player walks through a portal, for other
-  plugins to listen to and cancel
-- the permission nodes `multiverse.portal.*`, and per portal
-  `multiverse.portal.access.<portal>`, `multiverse.portal.fill.<portal>` and
-  `multiverse.portal.exempt.<portal>`
-
-Multiverse-NetherPortals (the plugin `multiverse-netherportals`, which needs
-`multiverse-core`):
-
-- `config.yml` with every Multiverse-NetherPortals 5.1 option and its
-  comments, and `links.yml`; a Multiverse-NetherPortals 4 `config.yml` is
-  migrated, its `worlds.<world>.portalgoesto` links moved to `links.yml`
-- nether and end portals lead to the linked world, or to the world their
-  name links to (`world` and `world_nether`, `world_the_end`, after the
-  `portal-auto-link-when` prefixes and suffixes), scaled by the worlds'
-  `scale`; the exit portal is searched for and built in that world; a world
-  linked to itself has its portals disabled
-- entering an end world puts the player on the obsidian platform at
-  100, 49, 0, built there; leaving an end world goes to the linked world's
-  spawn, or to the player's bed or anchor (`handle-end-exit-respawn`)
-- `bounceback`, `send-disabled-portal-message`,
-  `send-no-destination-message`, `teleport-entities` and the world entry
-  checks for a player stepping into a portal, and `MVPlayerTouchedPortalEvent`
-- `/mvnp link <nether|end> [fromWorld] <toWorld>`, `/mvnp unlink` (both
-  with `--bidirectional`) and `/mvnp list [nether|end]`, with tab completion,
-  the permissions `multiverse.netherportals.link|unlink|show` and the
-  aliases `/mvnplink`, `/mvnpl`, `/mvnpunlink`, `/mvnpu`, `/mvnplist`,
-  `/mvnpli` when `show-legacy-aliases` is on
-- `/mv reload` reads its files again and `/mv dumps` uploads them; other
-  plugins (Multiverse-Portals) can claim portals they handle through
-  `netherportals.WhenLoaded` and `CustomPortals.Register`
-
-## Not yet
-
-- Every `/mv` command not listed above; they are being ported.
-- **The Multiverse 4 aliases of `/mvp`** (`/mvpc`, `/mvpl`, ...) and
-  **Multiverse-NetherPortals asking Portals whether a player may use a
-  portal** (`MVPlayerTouchedPortalEvent`): both need Multiverse-Core
-  changes that come with the NetherPortals port
-  ([#13](https://github.com/golem-mc/multiverse/pull/13)).
-- **Vehicles and mobs walking into a portal** (`teleport-vehicles`, and
-  `teleport-entities` outside a nether portal fill): golem fires no event
-  when a vehicle or mob moves
-  ([golem-mc/golem#120](https://github.com/golem-mc/golem/issues/120)).
-- **Nether portal fills inside a frame vanilla does not accept** collapse
-  when a block next to them changes: golem's portal collapse does not ask
-  `BlockPhysicsEvent`, which Portals cancels to keep them
-  ([golem-mc/golem#143](https://github.com/golem-mc/golem/issues/143)).
-- **WorldEdit selections for `/mvp create`**: golem's WorldEdit
-  (golem-mc/worldedit) offers a player's selection only through its
-  `core.API` service, and importing that package would build WorldEdit and
-  its SQLite driver into every server with Multiverse. Portals uses its own
-  wand until WorldEdit offers a lightweight selection interface.
-- **Bonus chests** (`/mv create --generate-bonus-chest`): golem cannot
-  create a world with one yet
-  ([golem-mc/golem#101](https://github.com/golem-mc/golem/issues/101)); the
-  command says so.
-- **Game rules per world** (`/mv clone` and `/mv regen` keep or reset
-  them, `/mv gamerule set` sets them for one world): golem worlds share one
-  set of game rules, so a rule set or reset in one world changes it in all
-  ([golem-mc/golem#65](https://github.com/golem-mc/golem/issues/65)).
-- **End platform drops** (`end-platform-drop-blocks`): a block cleared for
-  the arrival platform drops its own item, not its loot, as golem has no way
-  for a plugin to break a block naturally yet
-  ([golem-mc/golem#118](https://github.com/golem-mc/golem/issues/118)).
-- **The `advancements` and `recipes` shares**: their saved data is kept in
-  the player files but not switched, as golem cannot list the advancements
-  or award criteria silently
-  ([golem-mc/golem#97](https://github.com/golem-mc/golem/issues/97)) and has
-  no recipe book API for plugins
-  ([golem-mc/golem#98](https://github.com/golem-mc/golem/issues/98)).
-- **Importing from MultiInv, WorldInventories and PerWorldInventory**
-  (Multiverse-InventoriesImporter), the PlaceholderAPI placeholders and the
-  LuckPerms world group context: golem has no such plugins.
+Commands, flags, options, permissions and config files follow Multiverse 5; see the [Multiverse documentation](https://mvplugins.org/) for full usage.
 
 ## Installing
 
@@ -248,29 +10,44 @@ Multiverse-NetherPortals (the plugin `multiverse-netherportals`, which needs
 golem-launcher plugin add github.com/golem-mc/multiverse
 ```
 
-Each module is optional and needs the core (`github.com/golem-mc/multiverse`); add the ones you want:
+Optional modules (each requires the core):
 
 ```sh
-golem-launcher plugin add github.com/golem-mc/multiverse/netherportals
-golem-launcher plugin add github.com/golem-mc/multiverse/portals
 golem-launcher plugin add github.com/golem-mc/multiverse/inventories
+golem-launcher plugin add github.com/golem-mc/multiverse/portals
+golem-launcher plugin add github.com/golem-mc/multiverse/netherportals
 ```
 
-To run the checkout with golem's launcher, from source: `mise run dev`.
+## What's included
+
+- **World management** ([Core](https://mvplugins.org/core/)): create, import, load, unload, remove, delete, clone and regenerate worlds (`/mv create`, `/mv import`, `/mv load`, `/mv unload`, `/mv remove`, `/mv delete`, `/mv clone`, `/mv regen`), including custom generators.
+- **World inspection and admin**: list and inspect worlds, edit config, reload, confirm destructive actions and generate debug dumps (`/mv list`, `/mv info`, `/mv who`, `/mv whoall`, `/mv coordinates`, `/mv config`, `/mv reload`, `/mv confirm`, `/mv debug`, `/mv dumps`, `/mv version`, `/mv help`).
+- **Teleportation and anchors**: teleport players across worlds, manage world spawns and anchors, and use all Multiverse destination types (`/mv teleport`, `/mv spawn`, `/mv setspawn`, `/mv check`, `/mv anchor`).
+- **World properties and access**: configure and enforce game mode, flight, respawn, hunger, auto-heal, PvP, difficulty, weather, advancements, spawning, portal rules, player limits, blacklists, entry fees (items or [Vault](https://github.com/golem-mc/vault)) and chat prefixes (`/mv modify`, `/mv meta`, `/mv entity-spawn-config`).
+- **World utilities**: manage game rules, world borders, entity purging and generator listings (`/mv gamerule`, `/mv worldborder`, `/mv purge-entities`, `/mv purge-all-entities`, `/mv generators`).
+- **Per-world inventories and stats** ([Inventories](https://mvplugins.org/inventories/)): separate inventories, ender chests, health, hunger, XP, potion effects, statistics, bed spawns, last locations and Vault balances by world, group and game mode.
+- **Inventory groups and inspection**: create and edit world groups, view or edit live and stored player inventories, give items and run bulk edits (`/mvinv list`, `/mvinv info`, `/mvinv group`, `/mvinv create-group`, `/mvinv delete-group`, `/mvinv view`, `/mvinv modify`, `/mvinv give`, `/mvinv bulkedit`, `/mvinv reload`, `/mvinv config`).
+- **Custom portals** ([Portals](https://mvplugins.org/portals/)): select regions with the portal wand and build portals that teleport to destinations, run commands or transfer BungeeCord servers (`/mvp create`, `/mvp list`, `/mvp info`, `/mvp modify`, `/mvp select`, `/mvp remove`, `/mvp wand`, `/mvp debug`, `/mvp config`).
+- **Portal access and fills**: per-portal permissions, cooldowns, entry fees, custom portal frames filled with nether portal blocks, water or lava, and portal destinations.
+- **Nether and End portal linking** ([NetherPortals](https://mvplugins.org/netherportals/)): link each world's nether and end portals to any other world, with auto-linking, coordinate scaling and bounceback (`/mvnp link`, `/mvnp unlink`, `/mvnp list`).
+- **Permissions and Multiverse 4 migration**: Multiverse 5 permission nodes, legacy command aliases and automatic migration of Multiverse 4 configs and player data.
+
+## Not yet
+
+- Multiverse-NetherPortals checking Portals via `MVPlayerTouchedPortalEvent` ([#23](https://github.com/golem-mc/multiverse/issues/23)).
+- Vehicles and mobs walking into a portal ([golem-mc/golem#120](https://github.com/golem-mc/golem/issues/120)).
+- Keeping non-vanilla nether portal frames from collapsing on adjacent block updates ([golem-mc/golem#143](https://github.com/golem-mc/golem/issues/143)).
+- WorldEdit selections for `/mvp create` (uses the built-in portal wand).
+- Bonus chests on world creation ([golem-mc/golem#101](https://github.com/golem-mc/golem/issues/101)).
+- Per-world game rules ([golem-mc/golem#65](https://github.com/golem-mc/golem/issues/65)).
+- Natural block drops when clearing the End arrival platform ([golem-mc/golem#118](https://github.com/golem-mc/golem/issues/118)).
+- Switching `advancements` and `recipes` shares ([golem-mc/golem#97](https://github.com/golem-mc/golem/issues/97), [golem-mc/golem#98](https://github.com/golem-mc/golem/issues/98)).
+- Third-party integrations: Multiverse-InventoriesImporter, PlaceholderAPI placeholders and LuckPerms world-group contexts.
 
 ## Configuration
 
-Multiverse keeps its files in `plugins/multiverse-core/`. To move from a
-Bukkit or Paper server, copy `config.yml` and `worlds.yml` from
-`plugins/Multiverse-Core/` there. Multiverse-Inventories keeps its own in
-`plugins/multiverse-inventories/`: copy `plugins/Multiverse-Inventories/`'s
-`config.yml`, `groups.yml` and the `worlds`, `groups` and `players` folders
-there. Multiverse-Portals keeps `config.yml` and
-`portals.yml` in `plugins/multiverse-portals/` (from
-`plugins/Multiverse-Portals/`).
-Multiverse-NetherPortals keeps `config.yml` and `links.yml` in
-`plugins/multiverse-netherportals/` (from `plugins/Multiverse-NetherPortals/`).
+Config and data files live under `plugins/multiverse-core/`, `plugins/multiverse-inventories/`, `plugins/multiverse-portals/` and `plugins/multiverse-netherportals/`. To migrate from Bukkit or Paper, copy the corresponding `plugins/Multiverse-*/` files (`config.yml`, `worlds.yml`, `groups.yml`, `portals.yml`, `links.yml` and player data folders) into those directories.
 
 ## License
 
-BSD-3-Clause, like Multiverse. See `LICENSE`.
+BSD-3-Clause, like Multiverse. See [LICENSE](LICENSE).
