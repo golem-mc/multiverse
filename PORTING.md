@@ -55,3 +55,11 @@ requires a golem commit; move to a newer one with
   overworld, `dimensions/minecraft/overworld`, not the level directory) but
   not golem's `data/plugin_world.dat`; the copy takes the source's seed and,
   unless `--reset-world-config`, its spawn from `worlds.yml`.
+- `/mv gamerule` names a rule by its key (`keep_inventory` or
+  `minecraft:keep_inventory`) and also takes it with case and underscores
+  ignored (`keepInventory`); a boolean rule takes only `true` or `false`,
+  where ACF reads anything else as `false`.
+- `/mv worldborder set` and `add` say "shrinking" when the border shrinks;
+  Multiverse swaps the two messages.
+- `/mv purge-all-entities <world> <categories>` fails when no category is
+  valid, where Multiverse would purge every entity.

@@ -3,7 +3,7 @@ module github.com/golem-mc/multiverse
 go 1.27.4
 
 require (
-	github.com/golem-mc/golem v0.0.0-20261120013137-4f95109e0ff6
+	github.com/golem-mc/golem v0.0.0-20261120023403-875000896831
 	go.yaml.in/yaml/v4 v4.0.0
 )
 

@@ -8,7 +8,9 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/golem-mc/golem/plugin"
 	"go.yaml.in/yaml/v4"
@@ -164,6 +166,7 @@ func (ws *Worlds) loadConfig() error {
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
+	data = ws.migrateMV4(data)
 	m := map[string]any{}
 	if err := yaml.Unmarshal(data, &m); err != nil {
 		return fmt.Errorf("worlds.yml: %w", err)
@@ -178,6 +181,10 @@ func (ws *Worlds) loadConfig() error {
 		if err != nil {
 			ws.core.Log.Warn(fmt.Sprintf("Failed to parse world key '%s' in config: %s", rawKey, err))
 			continue
+		}
+		if from, ok := migrateWorldSection(sec, ref.Name); ok {
+			ws.core.Log.Info(fmt.Sprintf("Migrated the config of world '%s' from version %s to %s", ref.Name,
+				JavaDouble(from), JavaDouble(WorldConfigVersion)))
 		}
 		w, ok := ws.byRef(ref)
 		if !ok {
@@ -195,6 +202,28 @@ func (ws *Worlds) loadConfig() error {
 	}
 	ws.list = keep
 	return nil
+}
+
+// migrateMV4 rewrites a Multiverse 4 worlds.yml in version 5's form, keeping
+// the old file as worlds.yml.old.<millis>, and answers the new contents.
+func (ws *Worlds) migrateMV4(data []byte) []byte {
+	out, ok, err := migrateMV4Worlds(data)
+	if err != nil {
+		ws.core.Log.Warn(fmt.Sprintf("Failed to migrate old worlds.yml file: %s", err))
+		return data
+	}
+	if !ok {
+		return data
+	}
+	backup := ws.path + ".old." + strconv.FormatInt(time.Now().UnixMilli(), 10)
+	if err := os.WriteFile(backup, data, 0o644); err != nil {
+		ws.core.Log.Warn(fmt.Sprintf("Failed to migrate old worlds.yml file: %s", err))
+		return data
+	}
+	if err := os.WriteFile(ws.path, out, 0o644); err != nil {
+		ws.core.Log.Warn(fmt.Sprintf("Failed to migrate old worlds.yml file: %s", err))
+	}
+	return out
 }
 
 func (ws *Worlds) byRef(ref WorldRef) (*World, bool) {

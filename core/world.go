@@ -127,8 +127,11 @@ func (w *World) Spawn() (plugin.Location, bool) {
 // Spawning answers the spawning section.
 func (w *World) Spawning() *Spawning {
 	s, _ := w.Props.Custom(PropSpawning).(*Spawning)
-	if s == nil {
-		s = NewSpawning()
+	// The default is a new value each time: keep it so changes stick.
+	if s == nil || !w.Props.isSet(PropSpawning) {
+		if s == nil {
+			s = NewSpawning()
+		}
 		w.Props.setRaw(PropSpawning, s)
 	}
 	return s
@@ -138,8 +141,10 @@ func (w *World) Spawning() *Spawning {
 // save with Worlds.Save.
 func (w *World) Meta() Meta {
 	m, _ := w.Props.Custom(PropMeta).(Meta)
-	if m == nil {
-		m = Meta{}
+	if m == nil || !w.Props.isSet(PropMeta) {
+		if m == nil {
+			m = Meta{}
+		}
 		w.Props.setRaw(PropMeta, m)
 	}
 	return m
