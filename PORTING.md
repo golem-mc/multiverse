@@ -13,6 +13,7 @@ requires a golem commit; move to a newer one with
 | `core/` | config.yml, worlds.yml, the world manager, messages, permissions, the command framework, the API the modules use | `config/`, `world/`, `locale/`, `permissions/`, `command/`, `display/` |
 | `core/resources/` | Multiverse-Core's `multiverse-core_<lang>.properties`, unchanged | `src/main/resources` |
 | `commands/` | The `/mv` subcommands, one file per Java command class (or a few related ones) | `commands/*Command.java` |
+| `inventories/` | The `multiverse-inventories` plugin: config.yml, groups.yml, the sharables, the profile files and the share handling | Multiverse-Inventories |
 | `internal/mvtest/` | Test harness over golem's `plugintest`, and cheap test generators (`Void`, `Floor`) | — |
 | `cmd/server/` | A server binary with every plugin built in | — |
 
@@ -66,3 +67,16 @@ requires a golem commit; move to a newer one with
 - Player selectors in `/mv tp` and the `pl:`/`b:` destinations work without
   arguments only (`@a`, `@p`, `@r`, `@s`, `@e` for players): golem gives
   plugins no selector parser.
+- Multiverse-Inventories writes an item stack with data components in
+  Paper's byte form (base64 of the gzipped NBT) even with
+  `use-byte-serialization-for-inventory-data` off, as Bukkit's item meta map
+  cannot carry them; a plain stack is written in Bukkit's map form. Of a
+  Bukkit map from another server it reads the type, amount and damage.
+- `maximum_air` is Bukkit's own setting, which vanilla fixes at 300: it is
+  saved as 300 and applies nothing.
+- Multiverse-Inventories keeps a player's profiles in memory while they are
+  online and writes the files at once, rather than through its caches and a
+  file queue; the cache options are kept in `config.yml` but unused. A
+  `bed_spawn` is marked a bed or an anchor by the block at the respawn point
+  when it is saved, as golem has no event for a player's respawn point
+  changing.
