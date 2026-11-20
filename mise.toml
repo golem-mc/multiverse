@@ -5,7 +5,7 @@ gotestsum = "1.13.0"
 
 [tasks.build]
 description = "Build all packages"
-run = "go build ./..."
+run = ["go build ./...", "tools/dev-launcher.sh", "go tool launcher -config dev/launcher.json build -o dev/golem"]
 
 [tasks.test]
 description = "Run all tests, rerunning the ones that fail"
@@ -57,5 +57,6 @@ description = "Everything a PR must pass: build, test, lint, format, fix and tid
 depends = ["build", "test", "lint", "fmt:check", "fix:check", "tidy:check"]
 
 [tasks.dev]
-description = "Run a golem server with Multiverse built in"
-run = "go run ./cmd/server"
+description = "Run a golem server with Multiverse built in, through golem's launcher"
+dir = "dev"
+run = ["../tools/dev-launcher.sh", "go tool launcher"]

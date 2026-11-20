@@ -7,7 +7,7 @@ Everything is pinned in `mise.toml`. With [mise](https://mise.jdx.dev/) installe
 ```bash
 mise install
 mise run build
-mise run dev        # a golem server with Multiverse built in
+mise run dev        # starts golem via `go tool launcher` with the local plugins, in dev/
 ```
 
 ## Before you open a pull request
@@ -20,7 +20,7 @@ mise run lint       # golangci-lint
 mise run test:changed   # repeats the tests your branch adds or changes
 ```
 
-`mise run check` runs build, test, lint and the format, fix and tidy checks, as CI does
+`mise run build` also builds the dev server through the launcher. `mise run check` runs build, test, lint and the format, fix and tidy checks, as CI does
 (jobs Build, Lint, Test, Fix, Format, Tidy).
 
 ## Commit messages and releases
