@@ -259,8 +259,7 @@ golem-launcher plugin add github.com/golem-mc/multiverse/portals
 golem-launcher plugin add github.com/golem-mc/multiverse/inventories
 ```
 
-Or build a server with Multiverse built in: `mise run dev`, or
-`go build ./cmd/server`.
+To run the checkout with golem's launcher, from source: `mise run dev`.
 
 ## Configuration
 

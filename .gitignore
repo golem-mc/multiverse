@@ -16,3 +16,5 @@ whitelist.json
 banned-ips.json
 banned-players.json
 usercache.json
+logs/
+help.yml
