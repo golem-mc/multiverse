@@ -251,6 +251,14 @@ Multiverse-NetherPortals (the plugin `multiverse-netherportals`, which needs
 golem-launcher plugin add github.com/golem-mc/multiverse
 ```
 
+Each module is optional and needs the core (`github.com/golem-mc/multiverse`); add the ones you want:
+
+```sh
+golem-launcher plugin add github.com/golem-mc/multiverse/netherportals
+golem-launcher plugin add github.com/golem-mc/multiverse/portals
+golem-launcher plugin add github.com/golem-mc/multiverse/inventories
+```
+
 Or build a server with Multiverse built in: `mise run dev`, or
 `go build ./cmd/server`.
 
