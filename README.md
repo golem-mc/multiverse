@@ -141,12 +141,26 @@ Multiverse-Portals:
   migrated
 - `/mvp create`, `/mvp list`, `/mvp info`, `/mvp modify`, `/mvp select`,
   `/mvp remove`, `/mvp wand`, `/mvp debug` and `/mvp config`, with tab
-  completion and the Multiverse 4 aliases (`/mvpc`, `/mvpl`, ...)
+  completion
 - selecting a portal's box with the wand (`wand-material`, a wooden pickaxe
   by default): left click the first corner, right click the second
 - the `multiverse-destination`, `command` (`op:`, `console:`, `%player%`,
   `%world%`) and `server` (BungeeCord) action types
 - the `p:<portal>[:<direction>]` and `rp:<portal>,...` destinations
+- walking into a portal (`use-on-move`) sends a player through its action,
+  with `enforce-portal-access` and its no-permission message, the portal's
+  entry fee (`entry-fee.price`, in the `entry-fee.currency` item or, when
+  that is unset, through golem-mc/vault's `vault.Economy`;
+  `multiverse.portal.exempt.<portal>`), its success message,
+  `portal-cooldown`, and the `/mvp debug` info instead
+- portals filled with nether portal blocks by flint and steel inside a frame
+  of `frame-materials`, and with water or lava by a bucket
+  (`bucket-filling`, `multiverse.portal.fill.<portal>`); a nether portal trip
+  through one runs the portal's action instead (`nether-animation`,
+  `portals-default-to-nether`, `teleport-entities` for mobs and items with
+  `teleport-non-players`); fluids do not flow into a portal
+- `MVPortalEvent`, fired before a player walks through a portal, for other
+  plugins to listen to and cancel
 - the permission nodes `multiverse.portal.*`, and per portal
   `multiverse.portal.access.<portal>`, `multiverse.portal.fill.<portal>` and
   `multiverse.portal.exempt.<portal>`
@@ -154,9 +168,22 @@ Multiverse-Portals:
 ## Not yet
 
 - Every `/mv` command not listed above; they are being ported.
-- **Using Multiverse portals** (walking into one, nether portal fills, the
-  bucket and flint-and-steel fills, entry fees, cooldowns, frames): being
-  ported.
+- **The Multiverse 4 aliases of `/mvp`** (`/mvpc`, `/mvpl`, ...) and
+  **Multiverse-NetherPortals asking Portals whether a player may use a
+  portal** (`MVPlayerTouchedPortalEvent`): both need Multiverse-Core
+  changes that come with the NetherPortals port
+  ([#13](https://github.com/golem-mc/multiverse/pull/13)).
+- **Vehicles and mobs walking into a portal** (`teleport-vehicles`, and
+  `teleport-entities` outside a nether portal fill): golem fires no event
+  when a vehicle or mob moves
+  ([golem-mc/golem#120](https://github.com/golem-mc/golem/issues/120)).
+- **Nether portal fills inside a frame vanilla does not accept** collapse
+  when a block next to them changes: golem's portal collapse does not ask
+  `BlockPhysicsEvent`, which Portals cancels to keep them
+  ([golem-mc/golem#143](https://github.com/golem-mc/golem/issues/143)).
+- **Cancelling a nether portal trip** to run a portal's action still leaves
+  the exit portal golem built at the other end
+  ([golem-mc/golem#68](https://github.com/golem-mc/golem/issues/68)).
 - **WorldEdit selections for `/mvp create`**: golem's WorldEdit
   (golem-mc/worldedit) offers a player's selection only through its
   `core.API` service, and importing that package would build WorldEdit and
