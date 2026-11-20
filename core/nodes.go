@@ -219,7 +219,7 @@ func (v *Values) Remove(n *Node, item string) error {
 	l := slices.Clone(v.List(n.Path))
 	i := slices.Index(l, item)
 	if i < 0 {
-		return fmt.Errorf("value %s not found in list", item)
+		return MsgError(Lit("Cannot remove item as it is already not in the list!"))
 	}
 	return v.Set(n, slices.Delete(l, i, i+1))
 }

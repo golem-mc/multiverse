@@ -96,3 +96,12 @@ func (e *MVDumpsDebugInfoEvent) PutDetailedDebugInfo(name, contents string) {
 
 // DetailedDebugInfo answers the files in the order they were added.
 func (e *MVDumpsDebugInfoEvent) DetailedDebugInfo() []DumpFile { return e.files }
+
+// MVRespawnEvent fires before Multiverse moves a respawning player to its
+// respawn world's spawn; RespawnLocation may be changed, and cancelling
+// leaves the server's respawn point.
+type MVRespawnEvent struct {
+	plugin.Cancellable
+	Player          plugin.Player
+	RespawnLocation plugin.Location
+}

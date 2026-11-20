@@ -63,6 +63,22 @@ Multiverse-Core:
   `vault.Economy` from whichever economy plugin provides it (charged, or paid
   out when negative), with `teleport-intercept`; `join-destination` and
   `first-spawn-override` on join
+- `/mv modify` (`/mvmodify`, `/mvm`): `set`, `add`, `remove` and `reset`
+  of every world property, with completion of the properties per action
+  and of their values, and the alias conflict warning
+- the world properties applied to the server: `gamemode` and
+  `allow-flight` (on join, on changing worlds, after
+  `gamemode-and-flight-enforce-delay`, with `enforce-gamemode`,
+  `enforce-flight` and `mv.bypass.gamemode.<world>`), `respawn-world`,
+  `bed-respawn`, `anchor-respawn` and the `spawn` section's respawn options
+  (with `MVRespawnEvent`), `hunger`, `auto-heal`, `pvp`, the `spawning`
+  section per category (`spawn`, `exceptions`, `tick-rate` and
+  `spawn-limit`, with `apply-entity-spawn-rate` and
+  `apply-entity-spawn-limit`, and the removal of forbidden entities as their
+  chunk loads), `difficulty`, `allow-weather`, `allow-advancement-grant`,
+  `portal-form`, `spawn-location`, the portal search radius
+  (`use-custom-portal-search`, `custom-portal-search-radius`) and the world
+  alias chat prefix (`enable-chat-prefix`, `chat-prefix-format`)
 - the permission nodes `multiverse.core.*`, and per world
   `multiverse.access.<world>`, `multiverse.exempt.<world>`,
   `mv.bypass.gamemode.<world>`, `mv.bypass.playerlimit.<world>` and
@@ -154,14 +170,6 @@ Multiverse-Portals:
   them, `/mv gamerule set` sets them for one world): golem worlds share one
   set of game rules, so a rule set or reset in one world changes it in all
   ([golem-mc/golem#65](https://github.com/golem-mc/golem/issues/65)).
-- **Spawn tick rates and limits** (`spawning.<category>.tick-rate` and
-  `spawn-limit`, set with `/mv entity-spawn-config modify`): kept in
-  `worlds.yml` but not applied, as golem has no per-world spawn rates or
-  limits and no entity spawn categories yet
-  ([golem-mc/golem#70](https://github.com/golem-mc/golem/issues/70)); until
-  then the categories `/mv purge-entities` uses are a table of vanilla
-  26.3's.
-
 - **`/mvinv view`, `/mvinv modify` and `/mvinv group`** (the inventory
   menus and the group conversation): being ported.
 - **The `advancements` and `recipes` shares**: their saved data is kept in

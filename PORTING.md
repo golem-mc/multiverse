@@ -94,3 +94,14 @@ requires a golem commit; move to a newer one with
   Multiverse finds the portal at its new place only after a reload.
 - A `command` portal action without `op:` or `console:` runs only for
   players: golem's other entities cannot run commands.
+- `pvp: false` cancels the damage a player (or their arrow) does to a
+  player in that world, as golem worlds have no PvP flag; the `pvp` game
+  rule is left alone.
+- `auto-heal: false` stops natural regeneration in peaceful, which is
+  Bukkit's `REGEN`; golem reports it as `RegainNatural`.
+- The vanilla dimensions share one world spawn, difficulty and weather on
+  golem, as in vanilla; a plugin world has its own. So a vanilla
+  dimension's `spawn-location` moves the world spawn only while it is in
+  that dimension, and its `difficulty` and `allow-weather` act on all three.
+- `/mv modify` warns that `keep-spawn-in-memory` has no effect when it is
+  set to true, not on every load as Multiverse does to the console.

@@ -158,22 +158,17 @@ func (w *World) Players() []plugin.Player {
 	return nil
 }
 
+// Reapply applies the property at path to the loaded world again, for a
+// change made inside a property's value, such as a spawning category.
+func (w *World) Reapply(path string) {
+	if hook := w.propertyHooks[path]; hook != nil {
+		hook()
+	}
+}
+
 // Set parses and sets a property by name, as /mv modify does, and saves
 // worlds.yml.
-func (w *World) Set(name, value string) error {
-	n, ok := w.Props.Nodes().Find(name)
-	if !ok {
-		return MsgError(M("mv-core.config.node.notfound", "{node}", name))
-	}
-	v, err := ParseString(n, value)
-	if err != nil {
-		return err
-	}
-	if err := w.Props.Set(n, v); err != nil {
-		return err
-	}
-	return w.core.Worlds.Save()
-}
+func (w *World) Set(name, value string) error { return w.Modify("set", name, value) }
 
 // GameModeOf converts a game mode name to golem's.
 func GameModeOf(name string) plugin.GameMode {
@@ -195,6 +190,14 @@ func DifficultyOf(name string) plugin.Difficulty {
 		return plugin.DifficultyNormal
 	}
 	return plugin.Difficulty(i)
+}
+
+// DifficultyName answers the worlds.yml name of a golem difficulty.
+func DifficultyName(d plugin.Difficulty) string {
+	if int(d) < len(Difficulties) {
+		return Difficulties[d]
+	}
+	return "normal"
 }
 
 // EnvironmentOfDimension answers the Bukkit environment of a dimension

@@ -9,12 +9,7 @@ import (
 
 func init() { all = append(all, spawnConfigCommands) }
 
-// modifyActions are the actions of a property change. MV: PropertyModifyAction
-var modifyActions = []string{"set", "add", "remove", "reset"}
-
-// spawnConfigCommands are /mv entity-spawn-config info and modify. golem
-// cannot apply a tick rate or spawn limit to a world yet
-// (golem-mc/golem#70), so those two are kept but have no effect. MV:
+// spawnConfigCommands are /mv entity-spawn-config info and modify. MV:
 // EntitySpawnConfigCommand
 func spawnConfigCommands(c *core.Core) []*core.Cmd {
 	return []*core.Cmd{{
@@ -59,7 +54,7 @@ func spawnConfigCommands(c *core.Core) []*core.Cmd {
 				}
 				return append(ctx.Core.WorldNames("both"), core.SpawnCategories...)
 			case 1:
-				return modifyActions
+				return core.ModifyActions
 			case 2:
 				return core.NewSpawning().Category("monster").Nodes().Names()
 			case 3:
@@ -100,7 +95,7 @@ func spawnConfigCommands(c *core.Core) []*core.Cmd {
 			if err != nil {
 				return err
 			}
-			action, err := pickOne(args[1], modifyActions)
+			action, err := pickOne(args[1], core.ModifyActions)
 			if err != nil {
 				return err
 			}
@@ -121,9 +116,10 @@ func spawnConfigCommands(c *core.Core) []*core.Cmd {
 			if err := ctx.Core.Worlds.Save(); err != nil {
 				return fail(err)
 			}
+			w.Reapply(core.PropSpawning)
 			ctx.Info(core.M("mv-core.entityspawnconfig.modify.success", "{property}", property, "{value}", shown,
 				"{category}", strings.ToUpper(cat), "{world}", w.Name()))
-			warnSpawnApply(ctx, property)
+			warnSpawnApply(ctx, property, w.Spawning().Category(cat).Custom(property) == core.SpawnUnset)
 			return nil
 		},
 	}}
@@ -176,16 +172,21 @@ func entityTypeName(c *core.Core, s string) (string, error) {
 }
 
 // warnSpawnApply sends the notes Multiverse gives when a tick rate or spawn
-// limit change will not apply. MV: SpawnCategoryConfig.Nodes onChange
-func warnSpawnApply(ctx *core.Ctx, property string) {
+// limit change will not apply, or not until a reload when it is now unset.
+// MV: SpawnCategoryConfig.Nodes onChange
+func warnSpawnApply(ctx *core.Ctx, property string, unset bool) {
 	switch property {
 	case "tick-rate":
 		if !ctx.Core.Config.Bool("world.apply-entity-spawn-rate") {
 			ctx.SendRaw("§cWarning: Changing tick rates has no effect because 'apply-entity-spawn-rate' is disabled in the core config.")
+		} else if unset {
+			ctx.SendRaw("§eNote: Setting tick-rate to '@unset' may not reset to the server default until the world is reloaded or server is restarted.")
 		}
 	case "spawn-limit":
 		if !ctx.Core.Config.Bool("world.apply-entity-spawn-limit") {
 			ctx.SendRaw("§cWarning: Changing spawn limits has no effect because 'apply-entity-spawn-limit' is disabled in the core config.")
+		} else if unset {
+			ctx.SendRaw("§eNote: Setting spawn-limit to '@unset' may not reset to the server default until the world is reloaded or server is restarted.")
 		}
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/golem-mc/golem/plugin"
 	"github.com/golem-mc/multiverse/commands"
 	"github.com/golem-mc/multiverse/core"
+	"github.com/golem-mc/multiverse/listeners"
 )
 
 // Multiverse is the core plugin.
@@ -15,7 +16,8 @@ type Multiverse struct{ core *core.Core }
 
 func init() { plugin.Register("multiverse-core", &Multiverse{}, plugin.SoftDepends("vault")) }
 
-// Enable loads the configs and worlds, then registers the commands.
+// Enable loads the configs and worlds, then registers the commands and
+// listeners.
 func (m *Multiverse) Enable(srv plugin.Server) error {
 	c, err := core.Enable(srv)
 	if err != nil {
@@ -23,6 +25,7 @@ func (m *Multiverse) Enable(srv plugin.Server) error {
 	}
 	m.core = c
 	commands.Register(c)
+	listeners.Register(c)
 	return c.Commands.Register()
 }
 
