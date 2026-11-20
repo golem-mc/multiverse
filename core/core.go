@@ -31,6 +31,11 @@ type Core struct {
 	Commands     *Commands
 	Permissions  *Permissions
 	Destinations *Destinations
+	Anchors      *Anchors
+
+	// teleportQueue names who asked for each player's Multiverse teleport
+	// while it runs, for the teleport intercept. MV: TeleportQueue
+	teleportQueue map[string]plugin.CommandSender
 
 	levelName string
 	// worldFolder overrides where a world's files are, for tests.
@@ -58,6 +63,7 @@ var events = []any{
 	(*MVWorldImportedEvent)(nil), (*MVWorldRemovedEvent)(nil), (*MVWorldDeleteEvent)(nil),
 	(*MVWorldClonedEvent)(nil), (*MVWorldRegeneratedEvent)(nil), (*MVWorldPropertyChangedEvent)(nil),
 	(*MVConfigReloadEvent)(nil), (*MVDebugModeEvent)(nil), (*MVDumpsDebugInfoEvent)(nil),
+	(*MVTeleportDestinationEvent)(nil),
 }
 
 // Enable loads config.yml and worlds.yml, loads the worlds and registers
@@ -85,6 +91,12 @@ func Enable(s plugin.Server) (*Core, error) {
 	if err := c.Worlds.Init(); err != nil {
 		return nil, err
 	}
+	c.teleportQueue = map[string]plugin.CommandSender{}
+	c.Anchors = newAnchors(c)
+	if err := c.Anchors.Load(); err != nil {
+		c.Log.Error("Failed to load anchors", "error", err)
+	}
+	c.listenPlayers()
 	instMu.Lock()
 	instance = c
 	instMu.Unlock()
@@ -132,10 +144,14 @@ func (c *Core) Reload() ([]string, error) {
 	if err := c.Worlds.Init(); err != nil {
 		return nil, err
 	}
+	if err := c.Anchors.Load(); err != nil {
+		return nil, err
+	}
 	for _, fn := range c.reloads {
 		fn()
 	}
-	e := &MVConfigReloadEvent{Configs: []string{"Multiverse-Core - config.yml", "Multiverse-Core - worlds.yml"}}
+	e := &MVConfigReloadEvent{Configs: []string{"Multiverse-Core - config.yml", "Multiverse-Core - worlds.yml",
+		"Multiverse-Core - anchors.yml"}}
 	c.fire(e)
 	return e.Configs, nil
 }

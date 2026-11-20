@@ -45,6 +45,15 @@ Multiverse-Core:
   `/mv worldborder add|center|damage amount|damage buffer|get|set|warning
   distance|warning time`, with their Multiverse 4 aliases (`/mvrule`,
   `/mvrules`, `/mvwho`, `/mvw`, `/mvwhoall`, `/mvgens`, `/mvco`, ...)
+- `/mv teleport` (`/mvtp`), `/mv spawn`, `/mv setspawn`, `/mv check` and
+  `/mv anchor set|delete|list` with `anchors.yml`; every destination type
+  (`w:`, `e:`, `pl:`, `a:`, `b:`, `ca:`), the safe-location search,
+  `--unsafe`, `--silent`, passenger modes, `use-finer-teleport-permissions`
+  and `concurrent-teleport-limit`
+- world entry checks on teleports and portals: `enforce-access`,
+  `player-limit`, `world-blacklist` and item entry fees (charged and paid
+  out), with `teleport-intercept`; `join-destination` and
+  `first-spawn-override` on join
 - the permission nodes `multiverse.core.*`, and per world
   `multiverse.access.<world>`, `multiverse.exempt.<world>`,
   `mv.bypass.gamemode.<world>`, `mv.bypass.playerlimit.<world>` and

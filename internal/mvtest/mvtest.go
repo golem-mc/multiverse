@@ -57,6 +57,7 @@ type Env struct {
 	MV  *core.Core
 	// Dir is the server's working directory; DataDir is Multiverse's.
 	Dir, DataDir string
+	perms        *perms
 }
 
 // Start starts a flat test server in a temporary directory with the plugins
@@ -84,7 +85,9 @@ func Start(t *testing.T, files map[string]string, opts ...plugintest.Option) *En
 	if _, ok := c.Server.(interface{ WorldFolder(plugin.Key) string }); !ok {
 		pointWorldFolders(c, filepath.Dir(dir))
 	}
-	return &Env{T: t, Srv: srv, MV: c, Dir: dir, DataDir: data}
+	pp := &perms{nodes: map[string]map[string]bool{}}
+	plugin.Provide[plugin.PermissionProvider](c.Server, pp, 0)
+	return &Env{T: t, Srv: srv, MV: c, Dir: dir, DataDir: data, perms: pp}
 }
 
 // pointWorldFolders makes c find worlds in the test server's level

@@ -37,6 +37,8 @@ type Permissions struct {
 func newPermissions(c *Core) *Permissions {
 	p := &Permissions{core: c, wildcards: map[string]map[string]bool{}}
 	p.Register(PermJoinLocationBypass, DefaultFalse)
+	p.Register(Concat(PermSpawn, "self"), DefaultOp)
+	p.Register(Concat(PermSpawn, "other"), DefaultOp)
 	return p
 }
 
