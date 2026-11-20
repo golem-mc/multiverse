@@ -45,9 +45,18 @@ func (FloorGenerator) SpawnPoint(w plugin.World) plugin.Location {
 	return plugin.Location{World: w, Pos: plugin.Vec3{X: 8.5, Y: 4, Z: 8.5}}
 }
 
+// generatorPlugin publishes one generator, as a generator plugin does.
+type generatorPlugin struct{ g plugin.Generator }
+
+func (generatorPlugin) Enable(plugin.Server) error { return nil }
+func (generatorPlugin) Disable()                   {}
+func (p generatorPlugin) Generator(plugin.Key, string) (plugin.Generator, error) {
+	return p.g, nil
+}
+
 func init() {
-	core.RegisterGenerator("Void", func(plugin.Key, string) plugin.Generator { return VoidGenerator{} })
-	core.RegisterGenerator("Floor", func(plugin.Key, string) plugin.Generator { return FloorGenerator{} })
+	plugin.Register("Void", generatorPlugin{VoidGenerator{}}, plugin.LoadBefore("multiverse-core"))
+	plugin.Register("Floor", generatorPlugin{FloorGenerator{}}, plugin.LoadBefore("multiverse-core"))
 }
 
 // Env is a running test server with Multiverse.
