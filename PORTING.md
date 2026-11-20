@@ -85,6 +85,9 @@ requires a golem commit; move to a newer one with
   players, under Multiverse-Inventories' three cache names.
 - `/mvinv bulkedit` runs at once and reports when it is done, rather than
   in the background.
+- `/mvinv group`'s conversation is for players only: golem has no console
+  input for plugins, so from the console it says conversations are not
+  allowed, as Multiverse-Inventories does for a remote console.
 - A negative entry fee (a reward) says "deposited" when it is paid out;
   Multiverse says "charged" for both directions.
 - `rp:` with no portal named picks any portal; Multiverse fails to find

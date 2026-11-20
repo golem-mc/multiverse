@@ -106,11 +106,13 @@ Multiverse-Inventories:
 - the shares `inventory_contents`, `armor_contents`, `off_hand`,
   `ender_chest`, `hit_points`, `max_hit_points`, `food_level`, `saturation`,
   `exhaustion`, `xp`, `lvl`, `total_xp`, `remaining_air`, `maximum_air`,
-  `fall_distance`, `fire_ticks`, `potion_effects`, `bed_spawn` (validated
-  with `validate-bed-anchor-respawn-location`) and the optional
+  `fall_distance`, `fire_ticks`, `potion_effects`, `game_statistics`
+  (saved under Bukkit's statistic names), `bed_spawn` (validated
+  with `validate-bed-anchor-respawn-location`), the optional
   `last_location` (with `apply-last-location-for-all-teleports` and
-  `reset-last-location-on-death`), their groups (`inventory`, `stats`,
-  `hunger`, `all`, ...) and other names
+  `reset-last-location-on-death`) and the optional `economy` (the
+  balance, through golem-mc/vault's economy service), their groups
+  (`inventory`, `stats`, `hunger`, `all`, ...) and other names
 - the player files in Multiverse-Inventories' layout and JSON format:
   `worlds/<world>/<player>.json` and `groups/<group>/<player>.json` with
   one section per game mode, `players/<uuid>.json` and `playernames.json`;
@@ -133,6 +135,11 @@ Multiverse-Inventories:
   `clone-player` and `clone-world-group`, `migrate inventory-serialization`)
   and `help`, with the legacy aliases (`/mvinvinfo`, `/mvinvl`, ...);
   `migrate` and `playerdata import` say the importer is not installed
+- `/mvinv view` and `/mvinv modify`: a player's live or stored inventory,
+  armour, off hand and stats in a menu, read-only or saved back when it
+  closes; `/mvinv group` (`/mvinvg`) builds or edits a group by chat
+- the `ll:<world>` destination (`/mv tp ll:world`): where the player last
+  was in that world
 
 Multiverse-Portals:
 
@@ -197,18 +204,12 @@ Multiverse-Portals:
   them, `/mv gamerule set` sets them for one world): golem worlds share one
   set of game rules, so a rule set or reset in one world changes it in all
   ([golem-mc/golem#65](https://github.com/golem-mc/golem/issues/65)).
-- **`/mvinv view`, `/mvinv modify` and `/mvinv group`** (the inventory
-  menus and the group conversation): being ported.
 - **The `advancements` and `recipes` shares**: their saved data is kept in
   the player files but not switched, as golem cannot list the advancements
   or award criteria silently
   ([golem-mc/golem#97](https://github.com/golem-mc/golem/issues/97)) and has
   no recipe book API for plugins
   ([golem-mc/golem#98](https://github.com/golem-mc/golem/issues/98)).
-- **The `game_statistics` share**: kept in the player files but not yet
-  switched; it is being ported.
-- **The `economy` share**: needs golem-mc/vault, the economy service; until
-  then it warns once that there is no economy.
 - **Importing from MultiInv, WorldInventories and PerWorldInventory**
   (Multiverse-InventoriesImporter), the PlaceholderAPI placeholders and the
   LuckPerms world group context: golem has no such plugins.

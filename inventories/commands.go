@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	importerURL  = "https://modrinth.com/project/multiverse-inventoriesimporter/"
-	importURL    = "https://mvplugins.org/inventories/how-to/import-playerdata/"
-	lastLocation = "https://mvplugins.org/inventories/how-to/configure-last-location/"
+	importerURL     = "https://modrinth.com/project/multiverse-inventoriesimporter/"
+	importURL       = "https://mvplugins.org/inventories/how-to/import-playerdata/"
+	lastLocationURL = "https://mvplugins.org/inventories/how-to/configure-last-location/"
 	// maxGive is the most items /mvinv give gives at once.
 	maxGive = 6400
 )
@@ -200,6 +200,7 @@ func (m *Module) commands() []*core.Cmd {
 		Run:      m.toggle,
 	}}
 	cmds = append(cmds, m.bulkEditCommands()...)
+	cmds = append(cmds, m.viewCommands()...)
 	help := &core.Cmd{
 		Name: "help", Permission: "multiverse.inventories.help", Syntax: "[filter] [page]",
 		Description: "Displays a list of available commands.", MaxArgs: 2,
@@ -490,7 +491,7 @@ func (m *Module) toggle(ctx *core.Ctx) error {
 		active.Add(s)
 		ctx.Info(core.M("mv-inventories.toggle.nowusingoptional", "{share}", s.Name()))
 		if s == LastLocation {
-			ctx.Info(core.M("mv-inventories.toggle.lastlocationinfo", "{url}", lastLocation))
+			ctx.Info(core.M("mv-inventories.toggle.lastlocationinfo", "{url}", lastLocationURL))
 		}
 	}
 	if err := m.Config.Set(m.optionalSharesNode, active); err != nil {
