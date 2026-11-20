@@ -38,10 +38,8 @@ type Core struct {
 	teleportQueue map[string]plugin.CommandSender
 
 	levelName string
-	// worldFolder overrides where a world's files are, for tests.
-	worldFolder func(plugin.Key) string
-	reloads     []func()
-	disables    []func()
+	reloads   []func()
+	disables  []func()
 }
 
 var (
@@ -177,7 +175,3 @@ func (c *Core) Debug(level int, format string, args ...any) {
 		c.Log.Info(fmt.Sprintf("[MV-Debug] "+format, args...))
 	}
 }
-
-// SetWorldFolderFunc makes WorldFolder answer through fn; tests point it at
-// the test server's level directory.
-func (c *Core) SetWorldFolderFunc(fn func(plugin.Key) string) { c.worldFolder = fn }

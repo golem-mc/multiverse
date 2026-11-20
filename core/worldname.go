@@ -132,20 +132,9 @@ func (c *Core) LevelName() string {
 }
 
 // WorldFolder answers the directory a world's files live in, whether or not
-// it is loaded. A golem without plugin.Server.WorldFolder (golem-mc/golem#63)
-// gets <level>/dimensions/<namespace>/<path>, as golem lays a dimension out.
-// MV: WorldFolderResolver
+// it is loaded; the overworld's is the level directory. MV: WorldFolderResolver
 func (c *Core) WorldFolder(key plugin.Key) string {
-	if c.worldFolder != nil {
-		return c.worldFolder(key)
-	}
-	if s, ok := c.Server.(interface{ WorldFolder(plugin.Key) string }); ok {
-		return s.WorldFolder(key)
-	}
-	if key == plugin.MinecraftKey("overworld") {
-		return c.LevelName()
-	}
-	return filepath.Join(c.LevelName(), "dimensions", key.Namespace, key.Path)
+	return c.Server.WorldFolder(key)
 }
 
 // PotentialWorlds answers the names of world folders Multiverse does not
