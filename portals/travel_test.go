@@ -220,3 +220,52 @@ func TestLightingAPortal(t *testing.T) {
 		}
 	})
 }
+
+// A nether portal trip through a Portals portal whose action runs instead
+// leaves no exit portal in the nether: golem asks plugins before it searches
+// for or builds one.
+func TestCancelledNetherTripBuildsNoExit(t *testing.T) {
+	env, p := start(t, nil, plugintest.Ops("Alice"), plugintest.WithGameMode("creative"))
+	env.Console("mv create Arena normal -g Floor")
+	alice := env.Join("Alice", true)
+	env.Sync(func() {
+		w, _ := env.MV.Worlds.Get("Arena")
+		pt, _ := p.Manager.Create("gate", "Alice", portals.NewRegion(w, plugin.Vec3{X: 2, Y: 5, Z: 6}, plugin.Vec3{X: 2, Y: 7, Z: 8}))
+		pt.Props.Set(mustNode(t, pt, "action"), "w:world")
+	})
+	env.Console("mvp config portal-cooldown 600000")
+	env.Console("mv tp Alice Arena")
+	env.Srv.RunTicks(3)
+	alice.Messages(1)
+
+	nether, ok := env.Srv.Host().World(plugin.Key{Namespace: "minecraft", Path: "the_nether"})
+	if !ok {
+		t.Fatal("no nether")
+	}
+	portal, _ := plugin.DefaultState(registry.BlockNetherPortal).With(registry.PropAxis, "z")
+	env.Sync(func() {
+		h, _ := env.MV.Worlds.Get("Arena")
+		w, _ := h.Handle()
+		for y := 5; y <= 7; y++ {
+			for z := 6; z <= 8; z++ {
+				w.SetBlockState(plugin.BlockPos{X: 2, Y: y, Z: z}, portal, 0)
+			}
+		}
+		alice.Handle().Teleport(plugin.Location{World: w, Pos: plugin.Vec3{X: 2.5, Y: 5, Z: 7.5}}, plugin.TeleportPlugin)
+	})
+	if w := worldOf(env, alice, "overworld", 40); w != "overworld" {
+		t.Fatalf("Alice is in %s, want the portal's destination", w)
+	}
+	env.Sync(func() {
+		// 2 / 8 and 7 / 8 scale to the nether's origin; the creation radius is 16.
+		for x := -20; x <= 20; x++ {
+			for z := -20; z <= 20; z++ {
+				for y := nether.MinY(); y < nether.MinY()+nether.Height(); y++ {
+					if nether.BlockState(plugin.BlockPos{X: x, Y: y, Z: z}).Block() == registry.BlockNetherPortal {
+						t.Fatalf("a nether portal was built at %d %d %d", x, y, z)
+					}
+				}
+			}
+		}
+	})
+}
