@@ -17,7 +17,7 @@ requires a golem commit; move to a newer one with
 | `netherportals/` | The `multiverse-netherportals` plugin: config.yml, links.yml, `/mvnp`, the portal listeners | Multiverse-NetherPortals |
 | `internal/mvtest/` | Test harness over golem's `plugintest`, and cheap test generators (`Void`, `Floor`) | — |
 | `portals/` | The `multiverse-portals` plugin: portals.yml, config.yml, `/mvp`, the `p:` and `rp:` destinations, travel through portals and their fills | Multiverse-Portals |
-| `cmd/server/` | A server binary with every plugin built in | — |
+| `dev/` | The launcher config `mise run dev` starts, with this repository's plugin packages | — |
 
 ## How the Java maps to Go
 

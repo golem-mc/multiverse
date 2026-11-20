@@ -16,3 +16,6 @@ whitelist.json
 banned-ips.json
 banned-players.json
 usercache.json
+/dev/golem
+logs/
+help.yml
