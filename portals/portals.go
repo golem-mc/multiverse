@@ -135,6 +135,7 @@ func (p *Portals) listen() {
 			}
 		}
 	})
+	plugin.Listen(s, p.onTouchedPortal)
 	plugin.Listen(s, func(e *plugin.PlayerQuitEvent) { delete(p.sessions, e.Player.UUID()) })
 	plugin.Listen(s, p.onInteract, plugin.ListenOptions{Priority: plugin.Low, IgnoreCancelled: true})
 }
@@ -156,5 +157,31 @@ func (p *Portals) onInteract(e *plugin.PlayerInteractEvent) {
 		e.SetCancelled(p.Session(e.Player).SetLeft(e.Block.Pos, w))
 	case plugin.RightClickBlock:
 		e.SetCancelled(p.Session(e.Player).SetRight(e.Block.Pos, w))
+	}
+}
+
+// onTouchedPortal denies a nether or end portal block that belongs to a
+// portal the player may not access, or whose action cannot be parsed.
+// MV: MVPCoreListener.portalTouchEvent
+func (p *Portals) onTouchedPortal(e *core.MVPlayerTouchedPortalEvent) {
+	if !e.CanUseThisPortal() {
+		return
+	}
+	pt, there := p.Manager.At(e.BlockTouched)
+	if !there {
+		return
+	}
+	if p.Session(e.Player).debug {
+		e.SetCancelled(true)
+		return
+	}
+	if p.Config.Bool("portal-usage.enforce-portal-access") && !pt.CanEnter(e.Player) {
+		// A portal the player has no access to.
+		e.SetCanUseThisPortal(false)
+		return
+	}
+	if _, err := pt.ActionHandler(e.Player); err != nil && !p.Config.Bool("portal-usage.portals-default-to-nether") {
+		p.Core.Issuer(e.Player).Error(core.M("mv-portals.portal.destination.invalid"))
+		e.SetCanUseThisPortal(false)
 	}
 }
