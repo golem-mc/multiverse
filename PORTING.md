@@ -117,3 +117,47 @@ requires a golem commit; move to a newer one with
   player's respawn point, so `handle-end-exit-respawn` acts on that
   `EntityPortalEvent` (keeping the bed or anchor arrival when Multiverse
   would) instead of on a respawn; with it off, golem's respawn stands.
+- Custom world generators (`-g Plugin[:id]`) are discovered through golem's
+  `plugin.GeneratorProvider`; a plugin providing one must load before
+  `multiverse-core` so `auto-load` worlds find it.
+- Economy entry fees (`@vault-economy` in Core, unset `entry-fee.currency` in
+  Portals) and the `economy` share in Inventories use
+  [golem-mc/vault](https://github.com/golem-mc/vault)'s `vault.Economy`
+  service.
+- `/mvp create` uses Portals' own wand rather than WorldEdit selections:
+  `golem-mc/worldedit` exposes a player's selection only through `core.API`,
+  and importing it would pull WorldEdit and its SQLite driver into every
+  server with Multiverse.
+- `end-platform-drop-blocks` drops the cleared block's own item rather than
+  its natural loot until golem's `Block.breakNaturally`
+  ([golem-mc/golem#118](https://github.com/golem-mc/golem/issues/118)) is
+  wired up.
+- `advancements` and `recipes` shares preserve any existing saved data in
+  player files on read/write, but do not switch them yet
+  ([golem-mc/golem#97](https://github.com/golem-mc/golem/issues/97),
+  [golem-mc/golem#98](https://github.com/golem-mc/golem/issues/98)).
+- `/mvinv migrate` and `/mvinv playerdata import` report that the importer is
+  not installed.
+- Other plugins can contribute files to `/mv dumps` via
+  `MVDumpsDebugInfoEvent`, and claim custom portals in NetherPortals via
+  `netherportals.WhenLoaded` and `CustomPortals.Register`.
+
+## Config files and migrations
+
+- **Core**: `config.yml` carries every Multiverse-Core 5.8 option and its
+  comments; a Multiverse 4 `config.yml` is migrated. `worlds.yml` accepts
+  worlds keyed by name or namespaced key and writes them back in the same
+  form; Multiverse 4 `worlds.yml` (backed up as `worlds.yml.old.<time>`) and
+  world sections of versions 1.0–1.2 are migrated.
+- **Inventories**: `config.yml` (MV-Inventories 5) and `groups.yml` (older
+  `config.yml` groups migrate to `groups.yml`; first run creates a `default`
+  group of the vanilla worlds). Player files follow Multiverse-Inventories'
+  layout and JSON format (`worlds/<world>/<player>.json`,
+  `groups/<group>/<player>.json` with one section per game mode,
+  `players/<uuid>.json`, `playernames.json`), saving `game_statistics` under
+  Bukkit's statistic names and preserving files across player name changes.
+- **Portals**: `config.yml` (MV-Portals 5.3) and `portals.yml`; Multiverse 4
+  files are migrated.
+- **NetherPortals**: `config.yml` (MV-NetherPortals 5.1) and `links.yml`;
+  Multiverse 4 `config.yml` migrates `worlds.<world>.portalgoesto` into
+  `links.yml`.
