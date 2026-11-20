@@ -328,6 +328,16 @@ func JavaDouble(f float64) string {
 	return s
 }
 
+// JavaFloat formats f as Java's Float.toString does for ordinary
+// magnitudes.
+func JavaFloat(f float32) string {
+	s := strconv.FormatFloat(float64(f), 'f', -1, 32)
+	if !strings.Contains(s, ".") {
+		s += ".0"
+	}
+	return s
+}
+
 // decodeValue converts a value read from YAML to n's kind, falling back to
 // the default when it does not fit. MV: NodeSerializer.deserialize
 func decodeValue(n *Node, raw any) (any, bool) {

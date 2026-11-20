@@ -19,7 +19,10 @@ type Cmd struct {
 	// Legacy are its Multiverse 4 root commands (mvcreate, mvc), registered
 	// when show-legacy-aliases is on. With two words the second is a
 	// subcommand of the legacy root: "mvrule set".
-	Legacy     []string
+	Legacy []string
+	// Roots are root commands that run it whatever show-legacy-aliases
+	// says, as an ACF @CommandAlias on the method does (/mvtp).
+	Roots      []string
 	Permission string
 	// Syntax is the usage after the subcommand, e.g. "<name> <environment>".
 	Syntax string
@@ -139,19 +142,23 @@ func (cs *Commands) Add(cmds ...*Cmd) {
 // All answers the subcommands in the order they were added.
 func (cs *Commands) All() []*Cmd { return slices.Clone(cs.list) }
 
-// Register registers /mv, and the legacy roots when show-legacy-aliases is
-// on, with the server.
+// Register registers /mv, each command's Roots, and the legacy roots when
+// show-legacy-aliases is on, with the server.
 func (cs *Commands) Register() error {
 	if err := cs.registerRoot("mv", nil, "Multiverse-Core commands"); err != nil {
 		return err
 	}
-	if !cs.core.Config.Bool("command.show-legacy-aliases") {
-		return nil
-	}
+	legacy := cs.core.Config.Bool("command.show-legacy-aliases")
 	for _, cmd := range cs.list {
-		for _, l := range cmd.Legacy {
+		roots := cmd.Roots
+		if legacy {
+			roots = append(slices.Clone(roots), cmd.Legacy...)
+		}
+		for _, l := range roots {
 			root, _, _ := strings.Cut(l, " ")
-			cs.legacy[root] = append(cs.legacy[root], cmd)
+			if !slices.Contains(cs.legacy[root], cmd) {
+				cs.legacy[root] = append(cs.legacy[root], cmd)
+			}
 		}
 	}
 	roots := make([]string, 0, len(cs.legacy))
@@ -273,7 +280,7 @@ func (cs *Commands) dispatchLegacy(sender plugin.CommandSender, label string, on
 	words := strings.Fields(line)
 	is := cs.core.Issuer(sender)
 	for _, cmd := range only {
-		for _, l := range cmd.Legacy {
+		for _, l := range cmd.rootPaths() {
 			root, sub, _ := strings.Cut(l, " ")
 			if root != label {
 				continue
@@ -448,7 +455,7 @@ func (cs *Commands) suggestLegacy(sender plugin.CommandSender, only []*Cmd, part
 	words := strings.Split(partial, " ")
 	var subs []string
 	for _, cmd := range only {
-		for _, l := range cmd.Legacy {
+		for _, l := range cmd.rootPaths() {
 			_, sub, _ := strings.Cut(l, " ")
 			if sub == "" {
 				if !cs.allowed(sender, cmd) {
@@ -536,3 +543,7 @@ func completeWith(words []string, candidates []string) []string {
 	slices.Sort(out)
 	return slices.Compact(out)
 }
+
+// rootPaths answers the root commands (and legacy subcommand paths) that
+// run cmd outside /mv.
+func (cmd *Cmd) rootPaths() []string { return append(slices.Clone(cmd.Roots), cmd.Legacy...) }

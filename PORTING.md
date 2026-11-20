@@ -63,3 +63,6 @@ requires a golem commit; move to a newer one with
   Multiverse swaps the two messages.
 - `/mv purge-all-entities <world> <categories>` fails when no category is
   valid, where Multiverse would purge every entity.
+- Player selectors in `/mv tp` and the `pl:`/`b:` destinations work without
+  arguments only (`@a`, `@p`, `@r`, `@s`, `@e` for players): golem gives
+  plugins no selector parser.
