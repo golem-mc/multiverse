@@ -407,14 +407,22 @@ func otherConfigNodes() []*Node {
 // Config is config.yml. MV: CoreConfig
 type Config struct {
 	*Values
-	path string
+	path    string
+	migrate func(map[string]any)
+	version float64
 }
 
 func newConfig(dir string) *Config {
-	nodes := NewNodes(configNodes()...)
-	c := &Config{Values: NewValues(nodes), path: filepath.Join(dir, "config.yml")}
+	c := NewConfigFile(filepath.Join(dir, "config.yml"), configNodes(), migrateConfig, ConfigVersion)
 	c.tune()
 	return c
+}
+
+// NewConfigFile answers a config file of nodes at path, read and written as
+// config.yml is: a module's own config.yml. migrate, when set, moves an
+// older file's keys before they are read; version is written at "version".
+func NewConfigFile(path string, nodes []*Node, migrate func(map[string]any), version float64) *Config {
+	return &Config{Values: NewValues(NewNodes(nodes...)), path: path, migrate: migrate, version: version}
 }
 
 // tune adds the validators and suggestions config.yml's nodes have beyond
@@ -459,9 +467,11 @@ func (c *Config) Load() error {
 	if m == nil {
 		m = map[string]any{}
 	}
-	migrateConfig(m)
+	if c.migrate != nil {
+		c.migrate(m)
+	}
 	c.Values.Load(m)
-	c.setRaw("version", ConfigVersion)
+	c.setRaw("version", c.version)
 	return c.Save()
 }
 
@@ -513,7 +523,15 @@ func (c *Config) render() []byte {
 			continue
 		}
 		writeComments(len(section))
-		b.WriteString(strings.Repeat("  ", len(section)) + parts[len(parts)-1] + ": " + yamlScalar(encodeValue(n, c.Get(n))) + "\n")
+		indent := strings.Repeat("  ", len(section))
+		if list, ok := encodeValue(n, c.Get(n)).([]string); ok && len(list) > 0 {
+			b.WriteString(indent + parts[len(parts)-1] + ":\n")
+			for _, item := range list {
+				b.WriteString(indent + "  - " + yamlScalar(item) + "\n")
+			}
+			continue
+		}
+		b.WriteString(indent + parts[len(parts)-1] + ": " + yamlScalar(encodeValue(n, c.Get(n))) + "\n")
 	}
 	if len(c.extra) > 0 {
 		keys := make([]string, 0, len(c.extra))
