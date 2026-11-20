@@ -37,7 +37,8 @@ func newWorlds(c *Core, dir string) *Worlds {
 }
 
 // OnChange registers fn to run when the property at path of a loaded world
-// changes, and when the world loads.
+// changes, and when the world loads; it runs now for the worlds already
+// loaded.
 func (ws *Worlds) OnChange(path string, fn func(*World)) {
 	prev := ws.hooks[path]
 	ws.hooks[path] = func(w *World) {
@@ -50,6 +51,9 @@ func (ws *Worlds) OnChange(path string, fn func(*World)) {
 	}
 	for _, w := range ws.list {
 		w.propertyHooks[path] = func() { ws.hooks[path](w) }
+		if w.Loaded() {
+			fn(w)
+		}
 	}
 }
 
@@ -265,6 +269,7 @@ func (ws *Worlds) importExisting() {
 		w := ws.add(ws.core.RefOfKey(h.Key()))
 		w.Props.setRaw(PropGenerator, "")
 		w.Props.setRaw(PropBiome, "")
+		w.Props.setRaw(PropDifficulty, DifficultyName(h.Difficulty()))
 		ws.attach(w, h)
 		ws.core.fire(&MVWorldImportedEvent{World: w})
 	}

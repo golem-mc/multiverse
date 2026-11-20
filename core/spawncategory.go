@@ -1,56 +1,57 @@
 package core
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/golem-mc/golem/plugin"
+	"github.com/golem-mc/golem/registry"
 )
 
-// spawnCategoryTypes lists, per Bukkit spawn category, the entity types
-// (registry key paths) vanilla 26.3 registers in it; every other type is
-// misc. golem's plugin API has no EntityType category yet
-// (golem-mc/golem#70), so this follows vanilla's EntityTypes by hand.
-// MV: SpawnCategoryMapper; vanilla: EntityType.Builder.of(..., MobCategory)
-var spawnCategoryTypes = map[string][]string{
-	"monster": {"blaze", "bogged", "breeze", "camel_husk", "cave_spider", "creaking", "creeper", "drowned",
-		"elder_guardian", "ender_dragon", "enderman", "endermite", "evoker", "ghast", "giant", "guardian", "hoglin",
-		"husk", "illusioner", "magma_cube", "parched", "phantom", "piglin", "piglin_brute", "pillager", "ravager",
-		"shulker", "silverfish", "skeleton", "slime", "spider", "stray", "sulfur_cube", "vex", "vindicator", "warden",
-		"witch", "wither", "wither_skeleton", "zoglin", "zombie", "zombie_horse", "zombie_nautilus",
-		"zombie_villager", "zombified_piglin"},
-	"animal": {"allay", "armadillo", "bee", "camel", "cat", "chicken", "cow", "donkey", "fox", "frog", "goat",
-		"happy_ghast", "horse", "llama", "mooshroom", "mule", "ocelot", "panda", "parrot", "pig", "polar_bear",
-		"rabbit", "sheep", "skeleton_horse", "sniffer", "strider", "tadpole", "trader_llama", "turtle",
-		"wandering_trader", "wolf"},
-	"water_animal":               {"dolphin", "nautilus", "squid"},
-	"water_ambient":              {"cod", "pufferfish", "salmon", "tropical_fish"},
-	"water_underground_creature": {"glow_squid"},
-	"ambient":                    {"bat"},
-	"axolotl":                    {"axolotl"},
+// bukkitCategories names each of vanilla's mob categories as Bukkit's
+// SpawnCategory does, the names worlds.yml uses. MV: CraftSpawnCategory.toBukkit
+var bukkitCategories = [registry.MobCategoryCount]string{
+	registry.MobCategoryMonster:                  "monster",
+	registry.MobCategoryCreature:                 "animal",
+	registry.MobCategoryAmbient:                  "ambient",
+	registry.MobCategoryAxolotls:                 "axolotl",
+	registry.MobCategoryUndergroundWaterCreature: "water_underground_creature",
+	registry.MobCategoryWaterCreature:            "water_animal",
+	registry.MobCategoryWaterAmbient:             "water_ambient",
+	registry.MobCategoryMisc:                     "misc",
 }
 
-var spawnCategoryOf = func() map[string]string {
-	m := map[string]string{}
-	for category, types := range spawnCategoryTypes {
-		for _, t := range types {
-			m[t] = category
-		}
-	}
-	return m
-}()
+// MobCategoryOf answers vanilla's mob category of a spawn category.
+func MobCategoryOf(category string) (registry.MobCategory, bool) {
+	i := slices.Index(bukkitCategories[:], category)
+	return registry.MobCategory(i), i >= 0
+}
 
 // SpawnCategoryOf answers the spawn category of an entity type, by its key
-// ("minecraft:zombie" or "zombie"): one of SpawnCategories.
+// ("minecraft:zombie" or "zombie"): one of SpawnCategories. MV:
+// SpawnCategoryMapper
 func SpawnCategoryOf(entityType string) string {
-	if c, ok := spawnCategoryOf[strings.TrimPrefix(strings.ToLower(entityType), "minecraft:")]; ok {
-		return c
+	t, ok := registry.EntityTypeByName("minecraft:" + strings.TrimPrefix(strings.ToLower(entityType), "minecraft:"))
+	if !ok {
+		return "misc"
 	}
-	return "misc"
+	return bukkitCategories[t.Category()]
 }
 
 // SpawnCategoryTypes answers the entity types (key paths) in a spawn
 // category; nil for misc, which holds every type no other category does.
-func SpawnCategoryTypes(category string) []string { return spawnCategoryTypes[category] }
+func SpawnCategoryTypes(category string) []string {
+	if category == "misc" {
+		return nil
+	}
+	var out []string
+	for _, name := range registry.EntityTypes {
+		if SpawnCategoryOf(name) == category {
+			out = append(out, strings.TrimPrefix(name, "minecraft:"))
+		}
+	}
+	return out
+}
 
 // AllowsEntity reports whether an entity of entityType (its key) may be in
 // the world by its category's settings. MV: EntitySpawnConfig.shouldAllowSpawn
