@@ -167,16 +167,17 @@ func (p *Portals) onTouchedPortal(e *core.MVPlayerTouchedPortalEvent) {
 	if !e.CanUseThisPortal() {
 		return
 	}
+	pt, there := p.Manager.At(e.BlockTouched)
+	if !there {
+		return
+	}
 	if p.Session(e.Player).debug {
 		e.SetCancelled(true)
 		return
 	}
-	pt, ok := p.portalFor(e.Player, e.BlockTouched)
-	if !ok {
-		if _, there := p.Manager.At(e.BlockTouched); there {
-			// A portal the player has no access to.
-			e.SetCanUseThisPortal(false)
-		}
+	if p.Config.Bool("portal-usage.enforce-portal-access") && !pt.CanEnter(e.Player) {
+		// A portal the player has no access to.
+		e.SetCanUseThisPortal(false)
 		return
 	}
 	if _, err := pt.ActionHandler(e.Player); err != nil && !p.Config.Bool("portal-usage.portals-default-to-nether") {

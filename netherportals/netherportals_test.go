@@ -473,7 +473,13 @@ func TestPortalsDebugModeKeepsPlayerInPortal(t *testing.T) {
 	env, alice, floor := gateEnv(t, "w:void", map[string]string{})
 	alice.Run("/mvp debug on")
 	alice.Messages(2)
-	w, z := stepIn(env, alice, floor)
+	env.Sync(func() {
+		alice.Handle().Teleport(plugin.Location{World: floor, Pos: plugin.Vec3{X: 8.5, Y: 4, Z: 8.3}}, plugin.TeleportPlugin)
+	})
+	env.Srv.RunTicks(5)
+	var w string
+	var z float64
+	env.Sync(func() { w, z = alice.Handle().World().Key().Path, alice.Handle().Pos().Z })
 	if w != "floor" || z > 8.4 || z < 8.2 {
 		t.Errorf("Alice is in %s at z %v, want to stay in the portal in floor", w, z)
 	}
