@@ -57,8 +57,10 @@ Multiverse-Core:
   `--unsafe`, `--silent`, passenger modes, `use-finer-teleport-permissions`
   and `concurrent-teleport-limit`
 - world entry checks on teleports and portals: `enforce-access`,
-  `player-limit`, `world-blacklist` and item entry fees (charged and paid
-  out), with `teleport-intercept`; `join-destination` and
+  `player-limit`, `world-blacklist` and entry fees in items or, with
+  `@vault-economy`, through [golem-mc/vault](https://github.com/golem-mc/vault)'s
+  `vault.Economy` from whichever economy plugin provides it (charged, or paid
+  out when negative), with `teleport-intercept`; `join-destination` and
   `first-spawn-override` on join
 - the permission nodes `multiverse.core.*`, and per world
   `multiverse.access.<world>`, `multiverse.exempt.<world>`,
@@ -107,9 +109,6 @@ Multiverse-Inventories:
 ## Not yet
 
 - Every `/mv` command not listed above; they are being ported.
-- **Entry fees paid with an economy** (`entry-fee.currency: '@vault-economy'`):
-  needs golem-mc/vault, the Vault plugin that will provide the shared
-  economy service.
 - **Bonus chests** (`/mv create --generate-bonus-chest`): golem cannot
   create a world with one yet
   ([golem-mc/golem#101](https://github.com/golem-mc/golem/issues/101)); the
