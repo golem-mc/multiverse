@@ -116,7 +116,13 @@ type Commands struct {
 	// resolvers: @mvteleport is any teleport permission.
 	dynamic map[string]func(plugin.CommandSender) bool
 	queue   *confirmQueue
+	// roots are the module roots (/mvinv), whose usage names the
+	// subcommand as /mv's does.
+	roots map[string]bool
 }
+
+// isRoot reports whether label is /mv or a module's root, not a legacy alias.
+func (cs *Commands) isRoot(label string) bool { return label == "mv" || cs.roots[label] }
 
 // SetDynamicPermission decides cmd.Permission "@name" with check.
 func (cs *Commands) SetDynamicPermission(name string, check func(plugin.CommandSender) bool) {
@@ -125,7 +131,7 @@ func (cs *Commands) SetDynamicPermission(name string, check func(plugin.CommandS
 
 func newCommands(c *Core) *Commands {
 	return &Commands{core: c, legacy: map[string][]*Cmd{}, dynamic: map[string]func(plugin.CommandSender) bool{},
-		queue: newConfirmQueue(c)}
+		queue: newConfirmQueue(c), roots: map[string]bool{}}
 }
 
 // Add adds a subcommand; Register must not have run yet unless the module
@@ -148,30 +154,36 @@ func (cs *Commands) Register() error {
 	if err := cs.registerRoot("mv", nil, "Multiverse-Core commands"); err != nil {
 		return err
 	}
+	cs.registerAliases(cs.list)
+	return nil
+}
+
+// registerAliases registers cmds' Roots, and their legacy roots when
+// show-legacy-aliases is on.
+func (cs *Commands) registerAliases(cmds []*Cmd) {
 	legacy := cs.core.Config.Bool("command.show-legacy-aliases")
-	for _, cmd := range cs.list {
+	var added []string
+	for _, cmd := range cmds {
 		roots := cmd.Roots
 		if legacy {
 			roots = append(slices.Clone(roots), cmd.Legacy...)
 		}
 		for _, l := range roots {
 			root, _, _ := strings.Cut(l, " ")
+			if cs.legacy[root] == nil {
+				added = append(added, root)
+			}
 			if !slices.Contains(cs.legacy[root], cmd) {
 				cs.legacy[root] = append(cs.legacy[root], cmd)
 			}
 		}
 	}
-	roots := make([]string, 0, len(cs.legacy))
-	for root := range cs.legacy {
-		roots = append(roots, root)
-	}
-	slices.Sort(roots)
-	for _, root := range roots {
+	slices.Sort(added)
+	for _, root := range added {
 		if err := cs.registerRoot(root, cs.legacy[root], ""); err != nil {
 			cs.core.Log.Warn("Could not register legacy alias", "alias", root, "error", err)
 		}
 	}
-	return nil
 }
 
 // registerRoot registers one root command: with only, a legacy alias that
@@ -193,8 +205,11 @@ func (cs *Commands) registerRoot(name string, only []*Cmd, desc string) error {
 }
 
 // RegisterRoot registers a module's own root command (/mvp, /mvnp, /mvinv)
-// whose subcommands are cmds, run like /mv's.
+// whose subcommands are cmds, run like /mv's, and their Roots and Legacy
+// roots as /mv's are.
 func (cs *Commands) RegisterRoot(name string, aliases []string, cmds []*Cmd) error {
+	cs.roots[name] = true
+	defer cs.registerAliases(cmds)
 	for _, cmd := range cmds {
 		if cmd.Permission != "" && !strings.HasPrefix(cmd.Permission, "@") {
 			cs.core.Permissions.Register(cmd.Permission, DefaultOp)
@@ -332,7 +347,7 @@ func (cs *Commands) run(is *Issuer, label string, cmd *Cmd, words []string) {
 // Usage answers cmd's usage line: /mv create <name> <environment> ...
 func (ctx *Ctx) Usage() string {
 	label := ctx.Label
-	if label == "mv" {
+	if ctx.Core.Commands.isRoot(label) {
 		label += " " + ctx.Cmd.Name
 	}
 	return strings.TrimSpace("/" + label + " " + ctx.Cmd.Syntax)

@@ -81,6 +81,10 @@ requires a golem commit; move to a newer one with
   `bed_spawn` is marked a bed or an anchor by the block at the respawn point
   when it is saved, as golem has no event for a player's respawn point
   changing.
+- `/mvinv cache stats` counts the uses of the profiles kept for online
+  players, under Multiverse-Inventories' three cache names.
+- `/mvinv bulkedit` runs at once and reports when it is done, rather than
+  in the background.
 - A negative entry fee (a reward) says "deposited" when it is paid out;
   Multiverse says "charged" for both directions.
 - `rp:` with no portal named picks any portal; Multiverse fails to find

@@ -178,7 +178,7 @@ func (cs *Commands) Help(is *Issuer, label string, cmds []*Cmd, filter string, p
 			continue
 		}
 		usage := "/" + label
-		if label == "mv" {
+		if cs.isRoot(label) {
 			usage += " " + cmd.Name
 		}
 		if cmd.Syntax != "" {

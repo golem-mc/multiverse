@@ -82,7 +82,7 @@ func (m *Module) profileType(p plugin.Player) ProfileType {
 }
 
 // key answers a player's profile key in a container.
-func key(t ContainerType, name string, typ ProfileType, p plugin.OfflinePlayer) ProfileKey {
+func key(t ContainerType, name string, typ ProfileType, p PlayerRef) ProfileKey {
 	return ProfileKey{Container: t, Name: name, Type: typ, Player: p.UUID(), PlayerName: p.Name()}
 }
 
@@ -316,7 +316,7 @@ func (m *Module) writeOnly(p plugin.Player) {
 // writeShare stores one sharable's value in the profiles of a player's
 // world and of its groups that share it, saving them when save is set.
 // MV: SingleShareWriter
-func (m *Module) writeShare(p plugin.OfflinePlayer, world string, typ ProfileType, s *Sharable, v any, save bool) {
+func (m *Module) writeShare(p PlayerRef, world string, typ ProfileType, s *Sharable, v any, save bool) {
 	if s.optional && !m.activeOptionalShares().Has(s) {
 		m.Debug(2, "Skipping write for optional share: %s", s)
 		return
@@ -351,7 +351,7 @@ func equalValue(a, b any) bool {
 // ReadShare answers one sharable's value for a player in a world: from the
 // first of its groups that shares it, else the world's profile.
 // MV: SingleShareReader
-func (m *Module) ReadShare(p plugin.OfflinePlayer, world string, typ ProfileType, s *Sharable) any {
+func (m *Module) ReadShare(p PlayerRef, world string, typ ProfileType, s *Sharable) any {
 	for _, g := range m.Groups.ForWorld(world) {
 		if g.IsSharing(s) {
 			return m.store.Profile(key(ContainerGroup, g.name, typ, p)).Get(s)
