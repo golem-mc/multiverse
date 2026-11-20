@@ -51,9 +51,9 @@ func boolMessage(b bool) core.Message {
 func (p *Portals) showPrice(is *core.Issuer, pt *Portal) {
 	switch price := pt.Price(); {
 	case price > 0:
-		is.Info(core.M("mv-portals.portalinfo.price", "{value}", p.Core.FormatPrice(price, pt.Currency())))
+		is.Info(core.M("mv-portals.portalinfo.price", "{value}", p.Core.FormatPrice(price, feeCurrency(pt))))
 	case price < 0:
-		is.Info(core.M("mv-portals.portalinfo.price", "{value}", p.Core.FormatPrice(-price, pt.Currency())))
+		is.Info(core.M("mv-portals.portalinfo.price", "{value}", p.Core.FormatPrice(-price, feeCurrency(pt))))
 	default:
 		is.Info(core.M("mv-portals.portalinfo.price.free"))
 	}

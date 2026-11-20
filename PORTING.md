@@ -15,7 +15,7 @@ requires a golem commit; move to a newer one with
 | `commands/` | The `/mv` subcommands, one file per Java command class (or a few related ones) | `commands/*Command.java` |
 | `inventories/` | The `multiverse-inventories` plugin: config.yml, groups.yml, the sharables, the profile files and the share handling | Multiverse-Inventories |
 | `internal/mvtest/` | Test harness over golem's `plugintest`, and cheap test generators (`Void`, `Floor`) | — |
-| `portals/` | The `multiverse-portals` plugin: portals.yml, config.yml, `/mvp`, the `p:` and `rp:` destinations | Multiverse-Portals |
+| `portals/` | The `multiverse-portals` plugin: portals.yml, config.yml, `/mvp`, the `p:` and `rp:` destinations, travel through portals and their fills | Multiverse-Portals |
 | `cmd/server/` | A server binary with every plugin built in | — |
 
 ## How the Java maps to Go

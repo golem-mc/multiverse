@@ -103,7 +103,10 @@ func (e EntryCheck) Fee(w *World) (pay bool, err error) {
 
 // currencyItem answers the item an item entry fee is paid in.
 func currencyItem(w *World) (registry.Item, bool) {
-	cur := w.Props.String(PropEntryFeeCurrency)
+	return itemCurrency(w.Props.String(PropEntryFeeCurrency))
+}
+
+func itemCurrency(cur string) (registry.Item, bool) {
 	if cur == VaultEconomyCode || cur == "" {
 		return 0, false
 	}
@@ -111,10 +114,29 @@ func currencyItem(w *World) (registry.Item, bool) {
 }
 
 // PayEntryFee charges p w's entry fee, or pays it out when negative.
-// MV: MVEconomist.payEntryFee, ItemEconomy, VaultHandler
 func (c *Core) PayEntryFee(p plugin.Player, w *World) {
-	price := w.Props.Double(PropEntryFeeAmount)
-	if w.Props.String(PropEntryFeeCurrency) == VaultEconomyCode {
+	c.PayFee(p, w.Props.Double(PropEntryFeeAmount), w.Props.String(PropEntryFeeCurrency))
+}
+
+// HasFunds reports whether p holds price in currency: items named by it,
+// or with VaultEconomyCode money of the vault.Economy service; false when
+// there is no way to pay. MV: MVEconomist.isPlayerWealthyEnough
+func (c *Core) HasFunds(p plugin.Player, price float64, currency string) bool {
+	if price <= 0 {
+		return true
+	}
+	if currency == VaultEconomyCode {
+		eco, ok := vault.LookupEconomy(c.Server)
+		return ok && eco.Has(p.UUID(), price)
+	}
+	item, ok := itemCurrency(currency)
+	return ok && p.Inventory().Count(item) >= int(price)
+}
+
+// PayFee charges p price in currency, or pays it out when negative, as
+// HasFunds reads currency. MV: MVEconomist.payEntryFee, ItemEconomy, VaultHandler
+func (c *Core) PayFee(p plugin.Player, price float64, currency string) {
+	if currency == VaultEconomyCode {
 		eco, ok := vault.LookupEconomy(c.Server)
 		if !ok || price == 0 {
 			return
@@ -131,12 +153,12 @@ func (c *Core) PayEntryFee(p plugin.Player, w *World) {
 		}
 		return
 	}
-	item, ok := currencyItem(w)
+	item, ok := itemCurrency(currency)
 	if !ok || price == 0 {
 		return
 	}
 	n := int(math.Abs(price))
-	formatted := c.FormatPrice(float64(n), w.Props.String(PropEntryFeeCurrency))
+	formatted := c.FormatPrice(float64(n), currency)
 	is := c.Issuer(p)
 	if price > 0 {
 		p.Inventory().Remove(plugin.ItemStack{Item: item, Count: n})

@@ -2,13 +2,14 @@ package portals
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/golem-mc/golem/plugin"
 	"github.com/golem-mc/multiverse/core"
 )
 
 // Session is what Portals remembers of a player while they are online:
-// their wand selection, selected portal and debug mode.
+// their wand selection, selected portal, debug mode and where they stand.
 // MV: PortalPlayerSession
 type Session struct {
 	p      *Portals
@@ -21,6 +22,16 @@ type Session struct {
 	// left and right are the wand's corners and the worlds they are in.
 	left, right           *plugin.BlockPos
 	leftWorld, rightWorld *core.World
+
+	// loc is the player's last block, standingIn the portal there.
+	loc        plugin.Location
+	standingIn *Portal
+	// stale says the last move stayed in loc's block.
+	stale bool
+	// movedOut says the player has left the portal they last used, so
+	// standing in one sends them.
+	movedOut     bool
+	lastTeleport time.Time
 }
 
 // Session answers p's session, making one on first use.
@@ -28,8 +39,10 @@ type Session struct {
 func (p *Portals) Session(pl plugin.Player) *Session {
 	s, ok := p.sessions[pl.UUID()]
 	if !ok {
-		s = &Session{p: p, player: pl, is: p.Core.Issuer(pl)}
+		s = &Session{p: p, player: pl, is: p.Core.Issuer(pl), movedOut: true,
+			lastTeleport: time.Now().Add(-p.cooldown())}
 		p.sessions[pl.UUID()] = s
+		s.setLocation(pl.Location())
 	}
 	s.player = pl
 	return s

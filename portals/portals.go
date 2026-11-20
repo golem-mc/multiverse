@@ -9,9 +9,11 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"reflect"
 	"sync"
 
 	"github.com/golem-mc/golem/plugin"
+	"github.com/golem-mc/golem/registry"
 	"github.com/golem-mc/multiverse/core"
 )
 
@@ -85,7 +87,9 @@ func (pl *Plugin) Enable(s plugin.Server) error {
 	if err := c.Commands.RegisterRoot("mvp", nil, p.commands()); err != nil {
 		return err
 	}
+	s.Events().Define(reflect.TypeFor[*MVPortalEvent]())
 	p.listen()
+	p.listenTravel()
 	pl.p = p
 	instMu.Lock()
 	instance = p
@@ -135,9 +139,13 @@ func (p *Portals) listen() {
 	plugin.Listen(s, p.onInteract, plugin.ListenOptions{Priority: plugin.Low, IgnoreCancelled: true})
 }
 
-// onInteract sets the wand's corners: a left click the first, a right
-// click the second. MV: MVPPlayerListener.playerInteract
+// onInteract lights portals with flint and steel, and sets the wand's
+// corners: a left click the first, a right click the second. MV: MVPPlayerListener.playerInteract
 func (p *Portals) onInteract(e *plugin.PlayerInteractEvent) {
+	if e.Block != nil && e.Action == plugin.RightClickBlock && e.Item.Item == registry.ItemFlintAndSteel {
+		p.lightPortal(e)
+		return
+	}
 	if e.Block == nil || e.Hand != plugin.MainHand || !e.Player.HasPermission("multiverse.portal.create") ||
 		e.Player.Inventory().Get(plugin.SlotMainHand).Item != p.wandItem() {
 		return
