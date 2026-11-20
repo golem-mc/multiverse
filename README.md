@@ -14,6 +14,7 @@ Bukkit or Paper finds the same `/mv` and the same `config.yml` and
 | Plugin | Package | What it does |
 |---|---|---|
 | Multiverse-Core | `github.com/golem-mc/multiverse` | `/mv` and its world manager |
+| Multiverse-Inventories | `github.com/golem-mc/multiverse/inventories` | Separate inventories and stats per world, group and game mode |
 
 Multiverse-Core:
 
@@ -62,6 +63,42 @@ Multiverse-Core:
 - Multiverse's events (`MVWorldLoadedEvent`, `MVWorldPropertyChangedEvent`,
   ...) for other plugins to listen to
 
+Multiverse-Inventories:
+
+- `config.yml` with every Multiverse-Inventories 5 option and its comments,
+  and `groups.yml`; an older `config.yml` is migrated, its groups moving to
+  `groups.yml`; on the first run a `default` group of the vanilla worlds
+  sharing everything is made
+- groups of worlds by name, wildcard (`world_*`) or regex (`r=...`), with
+  `shares`, `disabled-shares` and a respawn `spawn` world and priority;
+  conflicting groups are reported on start
+- the player's data is saved and switched on world change, on game mode
+  change with `enable-gamemode-share-handling`, on join with
+  `apply-playerdata-on-join`, on quit and on respawn in another world, with
+  `default-ungrouped-worlds`, `use-optionals-for-ungrouped-worlds`,
+  `always-write-world-profile` and the bypass permissions
+  `mvinv.bypass.world.<world>`, `mvinv.bypass.group.<group>` and
+  `mvinv.bypass.gamemode.<mode>` (with `enable-bypass-permissions`)
+- the shares `inventory_contents`, `armor_contents`, `off_hand`,
+  `ender_chest`, `hit_points`, `max_hit_points`, `food_level`, `saturation`,
+  `exhaustion`, `xp`, `lvl`, `total_xp`, `remaining_air`, `maximum_air`,
+  `fall_distance`, `fire_ticks`, `potion_effects`, `bed_spawn` (validated
+  with `validate-bed-anchor-respawn-location`) and the optional
+  `last_location` (with `apply-last-location-for-all-teleports` and
+  `reset-last-location-on-death`), their groups (`inventory`, `stats`,
+  `hunger`, `all`, ...) and other names
+- the player files in Multiverse-Inventories' layout and JSON format:
+  `worlds/<world>/<player>.json` and `groups/<group>/<player>.json` with
+  one section per game mode, `players/<uuid>.json` and `playernames.json`;
+  files from a Bukkit or Paper server are read, and a player who changed
+  their name keeps their files
+- items and inventory holders cannot go through portals between worlds
+  that do not share inventories; creative inventory changes are refused
+  for a few ticks after a world change, against item duping
+- Multiverse-Inventories' share handling events
+  (`WorldChangeShareHandlingEvent`, `GameModeChangeShareHandlingEvent`, ...)
+  for other plugins to listen to and cancel
+
 ## Not yet
 
 - Every `/mv` command not listed above; they are being ported.
@@ -90,6 +127,21 @@ Multiverse-Core:
   then the categories `/mv purge-entities` uses are a table of vanilla
   26.3's.
 
+- **Multiverse-Inventories' commands** (`/mvinv`): being ported.
+- **The `advancements` and `recipes` shares**: their saved data is kept in
+  the player files but not switched, as golem cannot list the advancements
+  or award criteria silently
+  ([golem-mc/golem#97](https://github.com/golem-mc/golem/issues/97)) and has
+  no recipe book API for plugins
+  ([golem-mc/golem#98](https://github.com/golem-mc/golem/issues/98)).
+- **The `game_statistics` share**: kept in the player files but not yet
+  switched; it is being ported.
+- **The `economy` share**: needs golem-mc/vault, the economy service; until
+  then it warns once that there is no economy.
+- **Importing from MultiInv, WorldInventories and PerWorldInventory**
+  (Multiverse-InventoriesImporter), the PlaceholderAPI placeholders and the
+  LuckPerms world group context: golem has no such plugins.
+
 ## Installing
 
 ```sh
@@ -103,7 +155,10 @@ Or build a server with Multiverse built in: `mise run dev`, or
 
 Multiverse keeps its files in `plugins/multiverse-core/`. To move from a
 Bukkit or Paper server, copy `config.yml` and `worlds.yml` from
-`plugins/Multiverse-Core/` there.
+`plugins/Multiverse-Core/` there. Multiverse-Inventories keeps its own in
+`plugins/multiverse-inventories/`: copy `plugins/Multiverse-Inventories/`'s
+`config.yml`, `groups.yml` and the `worlds`, `groups` and `players` folders
+there.
 
 ## License
 
