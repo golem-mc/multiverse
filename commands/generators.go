@@ -9,7 +9,7 @@ import (
 func init() { all = append(all, generatorsCommands) }
 
 // generatorsCommands are /mv generators list and info, over the generators
-// registered with core.RegisterGenerator. MV: GeneratorsCommand
+// published by generator plugins (plugin.GeneratorProvider). MV: GeneratorsCommand
 func generatorsCommands(c *core.Core) []*core.Cmd {
 	return []*core.Cmd{{
 		Name: "generators list", Legacy: []string{"mvgenerators", "mvgens"}, Permission: "multiverse.core.generator",
@@ -20,7 +20,7 @@ func generatorsCommands(c *core.Core) []*core.Cmd {
 			if err != nil {
 				return err
 			}
-			generators := core.GeneratorNames()
+			generators := ctx.Core.GeneratorNames()
 			if len(generators) == 0 {
 				ctx.Send(core.M("mv-core.generators.empty"))
 				return nil
@@ -33,10 +33,10 @@ func generatorsCommands(c *core.Core) []*core.Cmd {
 	}, {
 		Name: "generators info", Permission: "multiverse.core.generator", Syntax: "<generator>",
 		MinArgs: 1, MaxArgs: 1,
-		Complete: func(*core.Ctx, int) []string { return core.GeneratorNames() },
+		Complete: func(ctx *core.Ctx, _ int) []string { return ctx.Core.GeneratorNames() },
 		Run: func(ctx *core.Ctx) error {
 			var name string
-			for _, g := range core.GeneratorNames() {
+			for _, g := range ctx.Core.GeneratorNames() {
 				if strings.EqualFold(g, ctx.Arg(0)) {
 					name = g
 				}

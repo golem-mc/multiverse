@@ -30,6 +30,11 @@ Multiverse-Core:
   `/mv confirm`, `/mv help`, `/mv version`, with their flags (`--page`,
   `--filter`, `--raw`), tab completion and the Multiverse 4 aliases
   (`/mvlist`, `/mvinfo`, ...) when `show-legacy-aliases` is on
+- world types (`normal`, `flat`, `large_biomes`, `amplified`), flat
+  `--generator-settings`, single-biome worlds (`--biome`) and
+  `--no-structures`; generators by plugin name (`-g Plugin[:id]`) from any
+  golem plugin that publishes them (`plugin.GeneratorProvider`; it should
+  load before `multiverse-core` so `auto-load` worlds find it)
 - `/mv create`, `/mv import`, `/mv load`, `/mv unload`, `/mv remove`,
   `/mv delete`, `/mv clone` and `/mv regen`, with their flags (`--seed`,
   `--generator`, `--properties`, `--force-spawn-position`,
@@ -68,16 +73,10 @@ Multiverse-Core:
 - **Entry fees paid with an economy** (`entry-fee.currency: '@vault-economy'`):
   needs golem-mc/vault, the Vault plugin that will provide the shared
   economy service.
-- **Generators by plugin name** (`-g Plugin:id`): golem has no way for a
-  plugin to offer generators by name yet
-  ([golem-mc/golem#67](https://github.com/golem-mc/golem/issues/67)). Until
-  then a generator plugin can call `core.RegisterGenerator` from its `init`.
-
-- **World types and creation options** (`/mv create --world-type flat`,
-  `large_biomes`, `amplified`, `--no-structures`, `--biome`,
-  `--generator-settings`, `--generate-bonus-chest`): golem cannot make such a
-  plugin world yet ([golem-mc/golem#66](https://github.com/golem-mc/golem/issues/66));
-  the command says so instead of making a different world.
+- **Bonus chests** (`/mv create --generate-bonus-chest`): golem cannot
+  create a world with one yet
+  ([golem-mc/golem#101](https://github.com/golem-mc/golem/issues/101)); the
+  command says so.
 - **Game rules per world** (`/mv clone` and `/mv regen` keep or reset
   them, `/mv gamerule set` sets them for one world): golem worlds share one
   set of game rules, so a rule set or reset in one world changes it in all

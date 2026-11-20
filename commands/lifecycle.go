@@ -18,7 +18,7 @@ func init() { all = append(all, lifecycleCommands) }
 // CloneCommand, RegenCommand
 func lifecycleCommands(c *core.Core) []*core.Cmd {
 	generator := &core.Flag{Name: "--generator", Aliases: []string{"-g"}, Value: true,
-		Complete: func(*core.Ctx, string) []string { return core.GeneratorNames() }}
+		Complete: func(ctx *core.Ctx, _ string) []string { return ctx.Core.GeneratorNames() }}
 	biome := &core.Flag{Name: "--biome", Aliases: []string{"-b"}, Value: true}
 	settings := &core.Flag{Name: "--generator-settings", Aliases: []string{"-gs"}, Value: true}
 	noAdjust := &core.Flag{Name: "--no-adjust-spawn", Aliases: []string{"-n"}}

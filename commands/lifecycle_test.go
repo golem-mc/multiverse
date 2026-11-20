@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/golem-mc/golem/plugin"
+	"github.com/golem-mc/golem/registry"
 
 	"github.com/golem-mc/multiverse/core"
 	"github.com/golem-mc/multiverse/internal/mvtest"
@@ -69,7 +70,7 @@ func TestCreateLoadUnloadRemove(t *testing.T) {
 
 	env.Expect(env.Console("mv create void1 normal"), "World 'void1' already exists!")
 	env.Expect(env.Console("mv create Other bogus"), "Please specify one of (normal, nether, the_end, custom).")
-	env.Expect(env.Console("mv create Flat normal -t flat"), "world type FLAT is not supported by golem yet")
+	env.Expect(env.Console("mv create Chest normal -c"), "a bonus chest is not supported by golem yet")
 
 	env.Expect(env.Console("mv unload Void1"), "World 'Void1' unloaded!")
 	if w.Loaded() {
@@ -187,5 +188,27 @@ func TestRegenWithSeed(t *testing.T) {
 	}
 	if w.Alias() != "Pit" {
 		t.Errorf("alias %q", w.Alias())
+	}
+}
+
+// /mv create makes vanilla flat worlds, with their generator settings.
+func TestCreateFlatWorld(t *testing.T) {
+	env := mvtest.Start(t, nil)
+	out := env.Console(`mv create Flat normal -t flat -a -gs {"layers":[{"block":"minecraft:gold_block","height":2}],"biome":"minecraft:desert"}`)
+	env.Expect(out, "- World Type: FLAT")
+	env.Expect(out, "- Structures: false")
+	env.Expect(out, "World 'Flat' created!")
+	w := world(env, "Flat")
+	env.Sync(func() {
+		h, _ := w.Handle()
+		h.LoadChunk(plugin.ChunkPos{}, true, func(plugin.Chunk) {
+			if b := h.BlockState(plugin.BlockPos{X: 0, Y: h.MinY() + 1, Z: 0}).Block(); b != registry.BlockGoldBlock {
+				t.Errorf("block at the floor is %v", b)
+			}
+		})
+	})
+	env.Srv.RunTicks(3)
+	if w.Props.String(core.PropGeneratorSettings) == "" {
+		t.Error("worlds.yml lost the generator settings")
 	}
 }

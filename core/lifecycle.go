@@ -96,24 +96,22 @@ func (ws *Worlds) checkNew(name, kind string, folderMustNotExist bool) (WorldRef
 	return ref, nil
 }
 
-// unsupported refuses the world-creation options golem cannot honour yet.
-func unsupported(o *CreateOptions) error {
-	var what string
-	switch {
-	case o.WorldType != "" && o.WorldType != "normal":
-		what = "world type " + strings.ToUpper(o.WorldType)
-	case o.GeneratorSettings != "":
-		what = "generator settings"
-	case o.Biome != "":
-		what = "a single-biome world"
-	case o.NoStruct:
-		what = "turning structures off"
-	case o.BonusChest:
-		what = "a bonus chest"
-	default:
-		return nil
+// terrain applies the vanilla-generator options: world type, flat settings,
+// single biome and structures. MV: CreateWorldOptions
+func terrain(opts *plugin.WorldOptions, worldType, settings, biome string, noStructures bool) error {
+	if worldType != "normal" {
+		opts.Type = plugin.WorldType(worldType)
 	}
-	return fmt.Errorf("%s is not supported by golem yet (golem-mc/golem#66)", what)
+	opts.GeneratorSettings = settings
+	opts.NoStructures = noStructures
+	if biome != "" {
+		k, err := plugin.ParseKey(strings.ToLower(biome))
+		if err != nil {
+			return MsgError(M("mv-core.worldcreator.invalidbiomeprovider", "{biome}", biome, "{error}", err.Error()))
+		}
+		opts.Biome = k
+	}
+	return nil
 }
 
 // Create makes and loads a new world. MV: WorldManager.createWorld
@@ -122,11 +120,15 @@ func (ws *Worlds) Create(o CreateOptions) (*World, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := unsupported(&o); err != nil {
-		return nil, MsgError(M("mv-core.worldcreator.bukkitcreationfailed", "{world}", ref.Name, "{error}", err.Error()))
+	if o.BonusChest {
+		return nil, MsgError(M("mv-core.worldcreator.bukkitcreationfailed", "{world}", ref.Name,
+			"{error}", "a bonus chest is not supported by golem yet"))
 	}
 	opts, err := ws.options(ref.Key, o.Environment, o.Generator)
 	if err != nil {
+		return nil, err
+	}
+	if err := terrain(&opts, o.WorldType, o.GeneratorSettings, o.Biome, o.NoStruct); err != nil {
 		return nil, err
 	}
 	opts.Seed = ParseSeed(o.Seed)
@@ -205,11 +207,11 @@ func (ws *Worlds) Import(o ImportOptions) (*World, error) {
 	if !o.SkipFolderCheck && !ws.core.HasWorldFolder(ref.Key) {
 		return nil, MsgError(M("mv-core.importworld.worldfolderinvalid", "{world}", ref.Name))
 	}
-	if err := unsupported(&CreateOptions{Biome: o.Biome, GeneratorSettings: o.GeneratorSettings}); err != nil {
-		return nil, MsgError(M("mv-core.worldcreator.bukkitcreationfailed", "{world}", ref.Name, "{error}", err.Error()))
-	}
 	opts, err := ws.options(ref.Key, o.Environment, o.Generator)
 	if err != nil {
+		return nil, err
+	}
+	if err := terrain(&opts, "normal", o.GeneratorSettings, o.Biome, false); err != nil {
 		return nil, err
 	}
 	h, err := ws.core.Server.CreateWorld(opts)
@@ -540,7 +542,10 @@ func (ws *Worlds) Regen(o RegenOptions) (*World, error) {
 	}
 	create := CreateOptions{Name: w.Name(), Environment: w.Environment(), Seed: strconv.FormatInt(newSeed, 10),
 		Generator: w.Generator(), NoAdjust: keepSpawn || !w.Props.Bool(PropAdjustSpawn),
-		SkipFolderCheck: len(o.KeepFiles) > 0}
+		SkipFolderCheck: len(o.KeepFiles) > 0, GeneratorSettings: w.Props.String(PropGeneratorSettings)}
+	if b := w.Props.String(PropBiome); !strings.HasPrefix(b, "@") {
+		create.Biome = b
+	}
 	if err := ws.Delete(w, o.KeepFiles); err != nil {
 		return nil, err
 	}
