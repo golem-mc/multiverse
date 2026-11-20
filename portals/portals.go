@@ -161,14 +161,26 @@ func (p *Portals) onInteract(e *plugin.PlayerInteractEvent) {
 }
 
 // onTouchedPortal denies a nether or end portal block that belongs to a
-// portal the player may not use, with the portal's message.
-// MV: MVPCoreListener.onPlayerTouchedPortal
+// portal the player may not access, or whose action cannot be parsed.
+// MV: MVPCoreListener.portalTouchEvent
 func (p *Portals) onTouchedPortal(e *core.MVPlayerTouchedPortalEvent) {
-	pt, ok := p.Manager.At(e.BlockTouched)
-	if !ok {
+	if !e.CanUseThisPortal() {
 		return
 	}
-	if canUse, _ := p.checkUse(pt, e.Player); !canUse {
+	if p.Session(e.Player).debug {
+		e.SetCancelled(true)
+		return
+	}
+	pt, ok := p.portalFor(e.Player, e.BlockTouched)
+	if !ok {
+		if _, there := p.Manager.At(e.BlockTouched); there {
+			// A portal the player has no access to.
+			e.SetCanUseThisPortal(false)
+		}
+		return
+	}
+	if _, err := pt.ActionHandler(e.Player); err != nil && !p.Config.Bool("portal-usage.portals-default-to-nether") {
+		p.Core.Issuer(e.Player).Error(core.M("mv-portals.portal.destination.invalid"))
 		e.SetCanUseThisPortal(false)
 	}
 }

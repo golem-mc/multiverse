@@ -201,7 +201,6 @@ Multiverse-NetherPortals (the plugin `multiverse-netherportals`, which needs
 
 ## Not yet
 
-- Every `/mv` command not listed above; they are being ported.
 - **Vehicles and mobs walking into a portal** (`teleport-vehicles`, and
   `teleport-entities` outside a nether portal fill): golem fires no event
   when a vehicle or mob moves

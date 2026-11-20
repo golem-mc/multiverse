@@ -408,3 +408,88 @@ func TestPortalsDenyTouchingItsPortal(t *testing.T) {
 		}
 	})
 }
+
+// gateEnv starts both modules with Alice (an operator, in creative so a
+// portal trip takes one tick) and a Multiverse-Portals portal "gate" built
+// inside a nether portal fill on floor, going to action; floor's nether
+// link leads to void_nether.
+func gateEnv(t *testing.T, action string, files map[string]string) (*mvtest.Env, *plugintest.Player, plugin.World) {
+	t.Helper()
+	files["worlds.yml"] = worlds
+	files["../multiverse-portals/config.yml"] = "portal-creation:\n  frame-materials: []\n" + files["../multiverse-portals/config.yml"]
+	env := mvtest.Start(t, files, plugintest.WithGameMode("creative"), plugintest.Ops("Alice"))
+	alice := env.Join("Alice", true)
+	floor := handle(t, env, "floor")
+	env.Console("mvnp link nether floor void_nether")
+	portal, _ := plugin.DefaultState(registry.BlockNetherPortal).With(registry.PropAxis, "x")
+	env.Sync(func() {
+		alice.Handle().Teleport(plugin.Location{World: floor, Pos: plugin.Vec3{X: 8.5, Y: 4, Z: 6.5}}, plugin.TeleportPlugin)
+	})
+	env.Srv.RunTicks(3)
+	env.Sync(func() {
+		floor.SetBlockState(plugin.BlockPos{X: 8, Y: 4, Z: 8}, portal, 0)
+		floor.SetBlockState(plugin.BlockPos{X: 9, Y: 4, Z: 8}, portal, 0)
+		mvp, _ := portals.Get()
+		w, _ := env.MV.Worlds.Of(floor)
+		pt, _ := mvp.Manager.Create("gate", "Alice", portals.NewRegion(w, plugin.Vec3{X: 8, Y: 4, Z: 8}, plugin.Vec3{X: 9, Y: 4, Z: 8}))
+		n, _ := pt.Props.Nodes().Find("action")
+		pt.Props.Set(n, action)
+		n, _ = pt.Props.Nodes().Find("check-destination-safety")
+		pt.Props.Set(n, false)
+	})
+	alice.Messages(2)
+	return env, alice, floor
+}
+
+// stepIn moves Alice into the portal fill and answers the world she is in
+// and her z after up to 40 ticks, stopping once she has left floor.
+func stepIn(env *mvtest.Env, alice *plugintest.Player, floor plugin.World) (world string, z float64) {
+	env.Sync(func() {
+		alice.Handle().Teleport(plugin.Location{World: floor, Pos: plugin.Vec3{X: 8.5, Y: 4, Z: 8.3}}, plugin.TeleportPlugin)
+	})
+	for range 40 {
+		env.Srv.RunTicks(1)
+		env.Sync(func() { world, z = alice.Handle().World().Key().Path, alice.Handle().Pos().Z })
+		if world != floor.Key().Path {
+			break
+		}
+	}
+	return world, z
+}
+
+// A player who may use a Multiverse-Portals portal built in a nether portal
+// fill goes to the portal's destination, not to the world NetherPortals
+// links.
+func TestPortalsPortalBeatsNetherLink(t *testing.T) {
+	env, alice, floor := gateEnv(t, "w:void", map[string]string{})
+	if w, _ := stepIn(env, alice, floor); w != "void" {
+		t.Fatalf("Alice is in %s, want void (the portal's destination)", w)
+	}
+}
+
+// With portal debug mode on, touching the portal is cancelled: Alice is not
+// bounced back and does not travel.
+func TestPortalsDebugModeKeepsPlayerInPortal(t *testing.T) {
+	env, alice, floor := gateEnv(t, "w:void", map[string]string{})
+	alice.Run("/mvp debug on")
+	alice.Messages(2)
+	w, z := stepIn(env, alice, floor)
+	if w != "floor" || z > 8.4 || z < 8.2 {
+		t.Errorf("Alice is in %s at z %v, want to stay in the portal in floor", w, z)
+	}
+}
+
+// A portal whose action cannot be parsed tells the player and bounces them
+// back, unless portals-default-to-nether lets the nether trip go on.
+func TestPortalsInvalidDestinationBounces(t *testing.T) {
+	env, alice, floor := gateEnv(t, "", map[string]string{})
+	env.Sync(func() {
+		alice.Handle().Teleport(plugin.Location{World: floor, Pos: plugin.Vec3{X: 8.5, Y: 4, Z: 8.3}}, plugin.TeleportPlugin)
+	})
+	env.Expect(alice.Messages(3), "This Multiverse Portal does not have a valid destination!")
+	env.Sync(func() {
+		if z := alice.Handle().Pos().Z; z > 8 {
+			t.Errorf("Alice was not bounced back north: z %v", z)
+		}
+	})
+}
