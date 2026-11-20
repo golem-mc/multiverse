@@ -5,6 +5,7 @@ import (
 	"github.com/golem-mc/golem/app"
 	_ "github.com/golem-mc/multiverse"
 	_ "github.com/golem-mc/multiverse/inventories"
+	_ "github.com/golem-mc/multiverse/netherportals"
 	_ "github.com/golem-mc/multiverse/portals"
 )
 
