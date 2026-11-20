@@ -226,6 +226,7 @@ func TestLightingAPortal(t *testing.T) {
 // for or builds one.
 func TestCancelledNetherTripBuildsNoExit(t *testing.T) {
 	env, p := start(t, nil, plugintest.Ops("Alice"), plugintest.WithGameMode("creative"))
+	env.Console("mv config enforce-gamemode false")
 	env.Console("mv create Arena normal -g Floor")
 	alice := env.Join("Alice", true)
 	env.Sync(func() {
@@ -253,7 +254,7 @@ func TestCancelledNetherTripBuildsNoExit(t *testing.T) {
 		}
 		alice.Handle().Teleport(plugin.Location{World: w, Pos: plugin.Vec3{X: 2.5, Y: 5, Z: 7.5}}, plugin.TeleportPlugin)
 	})
-	if w := worldOf(env, alice, "overworld", 40); w != "overworld" {
+	if w := worldOf(env, alice, "overworld", 10); w != "overworld" {
 		t.Fatalf("Alice is in %s, want the portal's destination", w)
 	}
 	env.Sync(func() {
