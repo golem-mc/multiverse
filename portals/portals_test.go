@@ -221,3 +221,15 @@ func slicesHave(got []string, want ...string) bool {
 	}
 	return true
 }
+
+// The Multiverse-Portals 4 alias /mvpl lists portals like /mvp list.
+func TestLegacyListAlias(t *testing.T) {
+	env, p := start(t, nil)
+	env.Sync(func() {
+		w, _ := env.MV.Worlds.Get("world")
+		p.Manager.Create("gate", "Alice", portals.NewRegion(w, plugin.Vec3{X: 2, Y: 5, Z: 6}, plugin.Vec3{X: 2, Y: 7, Z: 8}))
+	})
+	out := env.Console("mvpl")
+	env.Expect(out, "1 Portals - Page 1/1")
+	env.Expect(out, "gate -> ")
+}

@@ -34,7 +34,6 @@ golem-launcher plugin add github.com/golem-mc/multiverse/netherportals
 
 ## Not yet
 
-- Multiverse-NetherPortals checking Portals via `MVPlayerTouchedPortalEvent` ([#23](https://github.com/golem-mc/multiverse/issues/23)).
 - Vehicles and mobs walking into a portal ([golem-mc/golem#120](https://github.com/golem-mc/golem/issues/120)).
 - Keeping non-vanilla nether portal frames from collapsing on adjacent block updates ([golem-mc/golem#143](https://github.com/golem-mc/golem/issues/143)).
 - WorldEdit selections for `/mvp create` (uses the built-in portal wand).
