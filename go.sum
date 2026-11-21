@@ -1,7 +1,7 @@
-github.com/golem-mc/golem v0.0.0-20261120102836-66f42d080407 h1:+NJ8TEK4r0AyQ96PY1tXeTY20HS+uhvw6KOTaGlUMkM=
-github.com/golem-mc/golem v0.0.0-20261120102836-66f42d080407/go.mod h1:oFlU6ijSdw7lNo/gxfCuANfYyklqkw5a9qGaUrbLcms=
-github.com/golem-mc/vault v0.0.0-20261120040922-38f0e9d58bb8 h1:Dr319qY90+Zn34/jARSGrVQdoo/5Cz67ozIO2HCpOlg=
-github.com/golem-mc/vault v0.0.0-20261120040922-38f0e9d58bb8/go.mod h1:GhyRzYbPQSZHlREJEnUr1ABYb5bfcdLPUlAy7+/uUco=
+github.com/golem-mc/golem v0.0.0-20261120233601-465ac52ea466 h1:u1LihFszk7U03o2fRW85bN56xJL9rHDRvtnTIKy9eOY=
+github.com/golem-mc/golem v0.0.0-20261120233601-465ac52ea466/go.mod h1:oFlU6ijSdw7lNo/gxfCuANfYyklqkw5a9qGaUrbLcms=
+github.com/golem-mc/vault v0.0.0-20261120163516-3797f133e39b h1:B+bKRp1VqLeSYgk1f6rh5vulC695kHchHmT4KcuQ++k=
+github.com/golem-mc/vault v0.0.0-20261120163516-3797f133e39b/go.mod h1:dojUguh+WFkhMH27DZbjG46a91UdGuIrTE8GWR7bv6w=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/klauspost/compress v1.20.4 h1:dD0v/bvxtjCBqQu6sx1TNWkalEY5lNTIe+HY9w8TeNI=
