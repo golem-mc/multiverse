@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/golem-mc/multiverse/compare/v0.1.0...v0.1.1) (2026-11-21)
+
+
+### Bug Fixes
+
+* **deps:** update golem ([#39](https://github.com/golem-mc/multiverse/issues/39)) ([1d345bf](https://github.com/golem-mc/multiverse/commit/1d345bf68dd4802499163575e3f8e0c5c0c99721))
+
 ## 0.1.0 (2026-11-21)
 
 
