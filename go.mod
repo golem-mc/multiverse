@@ -4,7 +4,7 @@ go 1.27.4
 
 require (
 	github.com/golem-mc/golem v0.1.0
-	github.com/golem-mc/vault v0.0.0-20261120163516-3797f133e39b
+	github.com/golem-mc/vault v0.0.0-20261121033929-eb5680247d38
 	github.com/google/uuid v1.6.0
 	go.yaml.in/yaml/v4 v4.0.0
 )
