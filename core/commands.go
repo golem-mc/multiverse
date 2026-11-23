@@ -103,7 +103,7 @@ type UsageError struct{ Msg Message }
 
 func (e *UsageError) Error() string { return english.Format(nil, e.Msg) }
 
-// InvalidArg fails the command with "Error: msg" and the usage.
+// InvalidArg fails the command with a message and the usage.
 func InvalidArg(m Message) error { return &UsageError{Msg: m} }
 
 // Commands is /mv and its subcommands. MV: MVCommandManager
@@ -346,25 +346,38 @@ func (cs *Commands) run(is *Issuer, label string, cmd *Cmd, words []string) {
 
 // Usage answers cmd's usage line: /mv create <name> <environment> ...
 func (ctx *Ctx) Usage() string {
+	return strings.TrimSpace(ctx.usagePath() + " " + ctx.Cmd.Syntax)
+}
+
+func (ctx *Ctx) usagePath() string {
 	label := ctx.Label
 	if ctx.Core.Commands.isRoot(label) {
 		label += " " + ctx.Cmd.Name
 	}
-	return strings.TrimSpace("/" + label + " " + ctx.Cmd.Syntax)
+	return "/" + label
 }
 
 func (cs *Commands) report(ctx *Ctx, err error) {
 	var ue *UsageError
 	switch {
 	case errors.Is(err, ErrUsage):
-		ctx.SendRaw("§eUsage: " + ctx.Usage())
 	case errors.As(err, &ue):
-		ctx.SendRaw("§cError: " + ctx.Format(ue.Msg))
-		ctx.SendRaw("§eUsage: " + ctx.Usage())
+		if ue.Msg.Key == "" {
+			ctx.SendRaw("§cError: " + ctx.Format(ue.Msg))
+		} else {
+			ctx.Error(ue.Msg)
+		}
 	case errors.Is(err, ErrHandled):
+		return
 	default:
 		ctx.Fail(err)
+		return
 	}
+	usage := "§eUsage: §a" + ctx.usagePath()
+	if syntax := strings.TrimSpace(ctx.Cmd.Syntax); syntax != "" {
+		usage += "§f " + syntax
+	}
+	ctx.SendRaw(usage)
 }
 
 // ErrHandled is what Run answers when it has already told the sender.

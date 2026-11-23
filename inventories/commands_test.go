@@ -1,6 +1,7 @@
 package inventories_test
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 
@@ -23,6 +24,37 @@ func confirm(env *mvtest.Env, prompt []string, run func(string) []string) []stri
 	return nil
 }
 
+// recordingSender keeps the styled command replies that plugintest flattens.
+type recordingSender struct {
+	plugin.CommandSender
+	messages []plugin.Text
+}
+
+func (s *recordingSender) SendMessage(msg plugin.Text) {
+	s.messages = append(s.messages, msg)
+}
+
+func TestCreateGroupInvalidShareFormatting(t *testing.T) {
+	env, _ := start(t, map[string]string{inv + "config.yml": "first-run: false\n"})
+	sender := &recordingSender{CommandSender: env.MV.Server.Console()}
+	env.Sync(func() {
+		if _, err := env.MV.Server.Dispatch(sender, "mvinv create-group x world bogus"); err != nil {
+			t.Error(err)
+		}
+	})
+	want := []plugin.Text{
+		plugin.Plain("").Append(plugin.Plain("You did not specify any valid shares!").Color("red")),
+		plugin.Plain("").Append(
+			plugin.Plain("Usage: ").Color("yellow"),
+			plugin.Plain("/mvinv create-group").Color("green"),
+			plugin.Plain(" <name> [world[,extra]] [share[,extra]]").Color("white"),
+		),
+	}
+	if !reflect.DeepEqual(sender.messages, want) {
+		t.Errorf("invalid share replies = %+v, want %+v", sender.messages, want)
+	}
+}
+
 // The group commands change groups.yml and report as Multiverse-Inventories
 // does; delete-group waits for /mv confirm.
 func TestGroupCommands(t *testing.T) {
@@ -42,7 +74,8 @@ func TestGroupCommands(t *testing.T) {
 	env.Expect(env.Console("mvinv add-disabled-shares games saturation"),
 		"Group games now has the following disabled shares: [saturation]")
 	out = env.Console("mvinv add-shares games bogus")
-	env.Expect(out, "Error: You did not specify any valid shares!")
+	env.Expect(out, "You did not specify any valid shares!")
+	env.ExpectNot(out, "Error:")
 	env.Expect(out, "Usage: /mvinv add-shares <group> <share[,extra]>")
 	env.Expect(env.Console("mvinv add-shares nogroup hunger"), "There is no group with the name: nogroup")
 
