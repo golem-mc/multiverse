@@ -29,7 +29,10 @@ func TestGroupCommands(t *testing.T) {
 	env, _ := start(t, map[string]string{inv + "config.yml": "first-run: false\n"})
 	createWorlds(env, "g1", "g2")
 	env.Expect(env.Console("mvinv create-group games g1 inventory,-armor"), "You created a new group 'games'!")
+	var out []string
 	env.Expect(env.Console("mvinv create-group games"), "That group already exists! (games)")
+	out = env.Console("mvinv create-group bad g1 bogus")
+	env.Expect(out, "Usage: /mvinv create-group <name> [world[,extra]] [share[,extra]]")
 	env.Expect(env.Console("mvinv add-worlds games nope"), "There is no world with the name: nope")
 	env.Expect(env.Console("mvinv add-worlds games g1"), "World: g1 already part of Group: games")
 	env.Expect(env.Console("mvinv add-worlds games G2"), "World: g2 added to Group: games")
@@ -38,7 +41,7 @@ func TestGroupCommands(t *testing.T) {
 	env.Expect(env.Console("mvinv remove-shares games off_hand,ender_chest"), "is now sharing: [inventory_contents, food_level")
 	env.Expect(env.Console("mvinv add-disabled-shares games saturation"),
 		"Group games now has the following disabled shares: [saturation]")
-	out := env.Console("mvinv add-shares games bogus")
+	out = env.Console("mvinv add-shares games bogus")
 	env.Expect(out, "Error: You did not specify any valid shares!")
 	env.Expect(out, "Usage: /mvinv add-shares <group> <share[,extra]>")
 	env.Expect(env.Console("mvinv add-shares nogroup hunger"), "There is no group with the name: nogroup")

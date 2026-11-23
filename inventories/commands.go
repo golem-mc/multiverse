@@ -79,7 +79,7 @@ func (m *Module) commands() []*core.Cmd {
 		Run: m.config,
 	}, {
 		Name: "create-group", Permission: "multiverse.inventories.creategroup",
-		Syntax:      "<name> [share[,extra]] [world[,extra]]",
+		Syntax:      "<name> [world[,extra]] [share[,extra]]",
 		Description: "Creates a new empty World Group with no worlds and no shares.", MinArgs: 1, MaxArgs: 3,
 		Complete: func(ctx *core.Ctx, pos int) []string {
 			switch pos {

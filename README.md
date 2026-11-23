@@ -89,7 +89,7 @@ World properties for `/mv modify`: `alias`, `gamemode`, `difficulty`, `pvp`, `hu
 | Usage | What it does | Permission |
 |---|---|---|
 | `list`, `info <world\|group>` | Show groups and what a world shares | `multiverse.inventories.list`, `.info` |
-| `create-group <name> [shares] [worlds]`, `delete-group <group>`, `group` | Create, delete or edit a group (`group` asks step by step) | `.creategroup`, `.deletegroup`, `.group` |
+| `create-group <name> [worlds] [shares]`, `delete-group <group>`, `group` | Create, delete or edit a group (`group` asks step by step) | `.creategroup`, `.deletegroup`, `.group` |
 | `add-worlds`, `remove-worlds`, `add-shares`, `remove-shares`, `add-disabled-shares`, `remove-disabled-shares` `<group> <list>` | Edit a group | `.addworlds`, `.removeworlds`, `.addshares`, ... |
 | `toggle <share>` | Turn an optional share (`economy`, `last_location`) on or off | `.addshares` |
 | `view <player> <world>`, `modify <player> <world>` | Open a player's stored inventory, read-only or editable | `.view`, `.view.modify` |
