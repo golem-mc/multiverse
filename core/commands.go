@@ -363,7 +363,7 @@ func (cs *Commands) report(ctx *Ctx, err error) {
 	case errors.Is(err, ErrUsage):
 	case errors.As(err, &ue):
 		if ue.Msg.Key == "" {
-			ctx.SendRaw("§cError: " + ctx.Format(ue.Msg))
+			ctx.Error(M("acf-core.error_prefix", "{message}", ue.Msg))
 		} else {
 			ctx.Error(ue.Msg)
 		}
@@ -373,11 +373,11 @@ func (cs *Commands) report(ctx *Ctx, err error) {
 		ctx.Fail(err)
 		return
 	}
-	usage := "§eUsage: §a" + ctx.usagePath()
-	if syntax := strings.TrimSpace(ctx.Cmd.Syntax); syntax != "" {
-		usage += "§f " + syntax
+	syntax := strings.TrimSpace(ctx.Cmd.Syntax)
+	if syntax != "" {
+		syntax = " " + syntax
 	}
-	ctx.SendRaw(usage)
+	ctx.SendKind(Syntax, M("acf-core.invalid_syntax", "{command}", ctx.usagePath(), "{syntax}", syntax))
 }
 
 // ErrHandled is what Run answers when it has already told the sender.
