@@ -55,6 +55,56 @@ func TestCreateGroupInvalidShareFormatting(t *testing.T) {
 	}
 }
 
+type recordingPlayer struct {
+	plugin.Player
+	messages []plugin.Text
+}
+
+func (p *recordingPlayer) Locale() string { return "zh_cn" }
+
+func (p *recordingPlayer) SendMessage(msg plugin.Text) {
+	p.messages = append(p.messages, msg)
+}
+
+func TestLocalizedArgumentErrorFormatting(t *testing.T) {
+	env, _ := start(t, map[string]string{inv + "config.yml": "first-run: false\n"})
+	player := env.Join("Tester", true).Handle()
+	for _, tc := range []struct {
+		path, args, syntax, errorText string
+	}{
+		{
+			path: "mvinv create-group", args: "x world bogus",
+			syntax:    "<name> [world[,extra]] [share[,extra]]",
+			errorText: "你没有指定任何有效的共享！",
+		},
+		{
+			path: "mv gamerule set", args: "keep_inventory maybe world",
+			syntax:    "<gamerule> <value> [worlds|*]",
+			errorText: "错误：The game rule value maybe is not valid for game rule keep_inventory.",
+		},
+	} {
+		t.Run(tc.path, func(t *testing.T) {
+			sender := &recordingPlayer{Player: player}
+			env.Sync(func() {
+				if _, err := env.MV.Server.Dispatch(sender, "/"+tc.path+" "+tc.args); err != nil {
+					t.Error(err)
+				}
+			})
+			want := []plugin.Text{
+				plugin.Plain("").Append(plugin.Plain(tc.errorText).Color("red")),
+				plugin.Plain("").Append(
+					plugin.Plain("指令用法：").Color("yellow"),
+					plugin.Plain("/"+tc.path).Color("green"),
+					plugin.Plain(" "+tc.syntax).Color("white"),
+				),
+			}
+			if !reflect.DeepEqual(sender.messages, want) {
+				t.Errorf("command replies = %+v, want %+v", sender.messages, want)
+			}
+		})
+	}
+}
+
 // The group commands change groups.yml and report as Multiverse-Inventories
 // does; delete-group waits for /mv confirm.
 func TestGroupCommands(t *testing.T) {
