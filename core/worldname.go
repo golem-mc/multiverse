@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/golem-mc/golem/plugin"
@@ -138,25 +139,97 @@ func (c *Core) WorldFolder(key plugin.Key) string {
 }
 
 // PotentialWorlds answers the names of world folders Multiverse does not
-// know, for /mv import. MV: WorldManager.getPotentialWorlds
+// know, for /mv import: those under the level's dimensions folder and the
+// map folders in the server directory. MV: WorldManager.getPotentialWorlds
 func (c *Core) PotentialWorlds() []string {
+	var out []string
+	add := func(ref WorldRef) {
+		if _, known := c.Worlds.byRef(ref); !known && !slices.Contains(out, ref.Name) {
+			out = append(out, ref.Name)
+		}
+	}
 	root := filepath.Join(c.WorldFolder(plugin.MinecraftKey("overworld")), "dimensions")
 	namespaces, _ := os.ReadDir(root)
-	var out []string
 	for _, ns := range namespaces {
 		paths, _ := os.ReadDir(filepath.Join(root, ns.Name()))
 		for _, p := range paths {
 			key := plugin.Key{Namespace: ns.Name(), Path: p.Name()}
-			if !p.IsDir() || !c.HasWorldFolder(key) {
-				continue
-			}
-			ref := c.RefOfKey(key)
-			if _, known := c.Worlds.byRef(ref); !known {
-				out = append(out, ref.Name)
+			if p.IsDir() && c.hasDimensionFolder(key) {
+				add(c.RefOfKey(key))
 			}
 		}
 	}
+	entries, _ := os.ReadDir(c.serverDir())
+	for _, e := range entries {
+		if !e.IsDir() || !validWorldName.MatchString(e.Name()) || !holdsWorld(filepath.Join(c.serverDir(), e.Name())) {
+			continue
+		}
+		ref, err := c.ParseWorldRef(e.Name())
+		if err != nil || isVanilla(ref.Key) || ref.Key.Path != strings.ToLower(e.Name()) {
+			continue
+		}
+		add(ref)
+	}
 	return out
+}
+
+// serverDir answers the server directory, where Bukkit keeps world folders:
+// the working directory.
+func (c *Core) serverDir() string {
+	c.serverDirOnce.Do(func() {
+		c.serverDirPath = "."
+		if abs, err := filepath.Abs("."); err == nil {
+			c.serverDirPath = abs
+		}
+	})
+	return c.serverDirPath
+}
+
+// sourceFolder answers where a world's chunks and saved data are for
+// copying: the map folder in the server directory for a world imported from
+// there (its dimension folder in the 26.x layout), else its storage folder.
+func (c *Core) sourceFolder(ref WorldRef) string {
+	dir := c.ServerWorldFolder(ref)
+	if dir == "" {
+		dir = c.storageFolder(ref.Key)
+	}
+	if dim := filepath.Join(dir, "dimensions", "minecraft", "overworld"); ref.Key != plugin.MinecraftKey("overworld") && isDir(dim) {
+		return dim
+	}
+	return dir
+}
+
+func isDir(p string) bool {
+	st, err := os.Stat(p)
+	return err == nil && st.IsDir()
+}
+
+// ServerWorldFolder answers the map folder in the server directory that an
+// unknown-to-golem world named name is opened from, or "" when its own
+// dimension folder has the world or no such map folder exists.
+func (c *Core) ServerWorldFolder(ref WorldRef) string {
+	if isVanilla(ref.Key) || c.hasDimensionFolder(ref.Key) || !validWorldName.MatchString(ref.Name) {
+		return ""
+	}
+	dir := filepath.Join(c.serverDir(), ref.Name)
+	if !holdsWorld(dir) {
+		return ""
+	}
+	return dir
+}
+
+// holdsWorld reports whether dir is a world folder in either layout: a
+// level.dat, a region folder, or the 26.x dimensions folder.
+func holdsWorld(dir string) bool {
+	if st, err := os.Stat(filepath.Join(dir, "level.dat")); err == nil && !st.IsDir() {
+		return true
+	}
+	for _, sub := range []string{"region", filepath.Join("dimensions", "minecraft", "overworld", "region")} {
+		if st, err := os.Stat(filepath.Join(dir, sub)); err == nil && st.IsDir() {
+			return true
+		}
+	}
+	return false
 }
 
 // storageFolder answers where a world's chunks and saved data are: its
@@ -170,8 +243,12 @@ func (c *Core) storageFolder(key plugin.Key) string {
 }
 
 // HasWorldFolder reports whether a world's folder holds a world: a region or
-// data folder. MV: WorldNameChecker.checkFolder
-func (c *Core) HasWorldFolder(key plugin.Key) bool {
+// data folder, or a map folder in the server directory. MV: WorldNameChecker.checkFolder
+func (c *Core) HasWorldFolder(ref WorldRef) bool {
+	return c.hasDimensionFolder(ref.Key) || c.ServerWorldFolder(ref) != ""
+}
+
+func (c *Core) hasDimensionFolder(key plugin.Key) bool {
 	dir := c.storageFolder(key)
 	for _, sub := range []string{"region", "data", "entities"} {
 		if st, err := os.Stat(filepath.Join(dir, sub)); err == nil && st.IsDir() {

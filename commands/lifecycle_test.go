@@ -1,8 +1,11 @@
 package commands_test
 
 import (
+	"io/fs"
 	"os"
+	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 
@@ -210,5 +213,107 @@ func TestCreateFlatWorld(t *testing.T) {
 	env.Srv.RunTicks(3)
 	if w.Props.String(core.PropGeneratorSettings) == "" {
 		t.Error("worlds.yml lost the generator settings")
+	}
+}
+
+// copyTree copies the directory src to dst.
+func copyTree(t *testing.T, src, dst string) {
+	t.Helper()
+	err := filepath.WalkDir(src, func(p string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		rel, _ := filepath.Rel(src, p)
+		if d.IsDir() {
+			return os.MkdirAll(filepath.Join(dst, rel), 0o755)
+		}
+		data, err := os.ReadFile(p)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(filepath.Join(dst, rel), data, 0o644)
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+// /mv import opens a map unzipped into the server directory, in the 26.x
+// layout and in the older one, with its level.dat spawn and its blocks.
+func TestImportServerDirectoryMap(t *testing.T) {
+	env := mvtest.Start(t, nil)
+	level := env.MV.WorldFolder(plugin.MinecraftKey("overworld"))
+	alice := env.Join("Alice", true)
+	env.Srv.RunTicks(10)
+	env.Sync(func() {
+		ow := env.MV.Server.Overworld()
+		if !ow.SetBlockState(plugin.BlockPos{X: 8, Y: 69, Z: 9}, plugin.DefaultState(registry.BlockGoldBlock), plugin.UpdateAll) {
+			t.Error("the fixture block was not placed")
+		}
+		ow.SetSpawnPoint(plugin.Location{World: ow, Pos: plugin.Vec3{X: 8, Y: 70, Z: 9}})
+	})
+	env.Srv.RunTicks(5)
+	env.Sync(func() { env.MV.Server.Overworld().Save(true) })
+	copyTree(t, level, "NewMap")
+	copyTree(t, level, "OldMap")
+	// The old layout keeps the overworld's chunks and data at the top.
+	oldDim := filepath.Join("OldMap", "dimensions")
+	for _, sub := range []string{"region", "entities", "poi", "data"} {
+		src := filepath.Join(oldDim, "minecraft", "overworld", sub)
+		if _, err := os.Stat(src); err == nil {
+			if err := os.Rename(src, filepath.Join("OldMap", sub)); err != nil && sub != "data" {
+				t.Fatal(err)
+			}
+		}
+	}
+	if err := os.RemoveAll(oldDim); err != nil {
+		t.Fatal(err)
+	}
+
+	got := env.MV.Commands.Suggest(env.MV.Server.Console(), nil, "import ")
+	if !(slices.Contains(got, "import NewMap") && slices.Contains(got, "import OldMap")) {
+		t.Errorf("import suggestions = %q", got)
+	}
+	for _, name := range []string{"NewMap", "OldMap"} {
+		env.Expect(env.Console("mv import "+name+" normal"), "World '"+name+"' imported!")
+		h, ok := world(env, name).Handle()
+		if !ok {
+			t.Fatalf("%s not loaded", name)
+		}
+		if sp := h.SpawnPoint(); int(sp.Pos.X) != 8 || int(sp.Pos.Y) != 70 || int(sp.Pos.Z) != 9 {
+			t.Errorf("%s spawn = %v, want 8 70 9", name, sp)
+		}
+		if loc := world(env, name).SpawnLocation(); loc == nil || int(loc.X) != 8 || int(loc.Z) != 9 {
+			t.Errorf("%s worlds.yml spawn = %v", name, loc)
+		}
+		out := mvtest.Run(alice, "mv tp "+name)
+		env.Srv.RunTicks(40)
+		env.Expect(append(out, alice.Messages(1)...), "Teleported you to "+name+".")
+		env.Sync(func() {
+			if l := alice.Handle().Location(); l.World.Key() != h.Key() || int(l.Pos.X) != 8 || int(l.Pos.Z) != 9 {
+				t.Errorf("%s: tp landed at %v", name, l)
+			}
+			if h.BlockState(plugin.BlockPos{X: 8, Y: 69, Z: 9}).Block() != registry.BlockGoldBlock {
+				t.Errorf("%s: the fixture's gold block is missing", name)
+			}
+		})
+	}
+	// The imported maps clone from, and delete, their server-directory folder.
+	mvtest.Run(alice, "mv tp w:world")
+	env.Srv.RunTicks(40)
+	for _, name := range []string{"NewMap", "OldMap"} {
+		env.Expect(env.Console("mv clone "+name+" Copy"+name), "World cloned to 'Copy"+name+"'!")
+		if _, err := os.Stat(filepath.Join(env.MV.WorldFolder(world(env, "Copy"+name).Key()), "region")); err != nil {
+			t.Errorf("%s clone has no region folder: %v", name, err)
+		}
+		out := env.Console("mv delete " + name)
+		confirm(env, out)
+		env.Srv.RunTicks(3)
+		if _, ok := env.MV.Worlds.Get(name); ok {
+			t.Errorf("%s still known", name)
+		}
+		if _, err := os.Stat(name); !os.IsNotExist(err) {
+			t.Errorf("%s folder survived: %v", name, err)
+		}
 	}
 }

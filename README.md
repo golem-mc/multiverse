@@ -30,7 +30,7 @@ All world commands start with `/mv` (`/mv help` lists them). Every command is al
 /mv tp creative                            go there
 /mv spawn                                  back to the world's spawn
 /mv list                                   all worlds you may enter
-/mv import mymap normal                    adopt a world folder you copied in
+/mv import mymap normal                    adopt a map folder unzipped into the server directory (its spawn and blocks are kept)
 ```
 
 Then add what you need: a group of worlds sharing inventories (`/mvinv create-group`), a portal between two spots (`/mvp wand`, select two corners, `/mvp create hub w:creative`) or a nether link (`/mvnp link nether creative creative_nether`).
