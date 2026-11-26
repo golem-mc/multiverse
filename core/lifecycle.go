@@ -90,7 +90,7 @@ func (ws *Worlds) checkNew(name, kind string, folderMustNotExist bool) (WorldRef
 	if _, ok := ws.core.Server.World(ref.Key); ok && kind != "importworld" {
 		return ref, MsgError(M("mv-core."+kind+".worldexistloaded", "{world}", ref.Name))
 	}
-	if folderMustNotExist && ws.core.HasWorldFolder(ref.Key) {
+	if folderMustNotExist && ws.core.HasWorldFolder(ref) {
 		return ref, MsgError(M("mv-core."+kind+".worldexistfolder", "{world}", ref.Name))
 	}
 	return ref, nil
@@ -204,7 +204,7 @@ func (ws *Worlds) Import(o ImportOptions) (*World, error) {
 		ws.core.fire(&MVWorldImportedEvent{World: w})
 		return w, nil
 	}
-	if !o.SkipFolderCheck && !ws.core.HasWorldFolder(ref.Key) {
+	if !o.SkipFolderCheck && !ws.core.HasWorldFolder(ref) {
 		return nil, MsgError(M("mv-core.importworld.worldfolderinvalid", "{world}", ref.Name))
 	}
 	opts, err := ws.options(ref.Key, o.Environment, o.Generator)
@@ -214,6 +214,7 @@ func (ws *Worlds) Import(o ImportOptions) (*World, error) {
 	if err := terrain(&opts, "normal", o.GeneratorSettings, o.Biome, false); err != nil {
 		return nil, err
 	}
+	opts.Folder = ws.core.ServerWorldFolder(ref)
 	h, err := ws.core.Server.CreateWorld(opts)
 	if err != nil {
 		return nil, MsgError(M("mv-core.worldcreator.bukkitcreationfailed", "{world}", ref.Name, "{error}", err.Error()))
@@ -227,7 +228,7 @@ func (ws *Worlds) Import(o ImportOptions) (*World, error) {
 // unless skipFolderCheck. MV: WorldManager.loadWorld with LoadWorldOptions
 func (ws *Worlds) LoadChecked(w *World, skipFolderCheck bool) (*World, error) {
 	if !w.Loaded() && !skipFolderCheck && !isVanilla(w.Key()) {
-		if _, loaded := ws.core.Server.World(w.Key()); !loaded && !ws.core.HasWorldFolder(w.Key()) {
+		if _, loaded := ws.core.Server.World(w.Key()); !loaded && !ws.core.HasWorldFolder(WorldRef{Name: w.Name(), Key: w.Key()}) {
 			return nil, MsgError(M("mv-core.deleteworld.loadfailed", "{world}", w.Name()))
 		}
 	}
@@ -371,7 +372,7 @@ func (ws *Worlds) Clone(o CloneOptions) (*World, error) {
 		return nil, err
 	}
 	from := ws.core.storageFolder(o.From.Key())
-	if !ws.core.HasWorldFolder(o.From.Key()) {
+	if !ws.core.HasWorldFolder(WorldRef{Name: o.From.Name(), Key: o.From.Key()}) {
 		return nil, MsgError(M("mv-core.cloneworld.fromworldfolderinvalid", "{world}", o.From.Name()))
 	}
 	if h, ok := o.From.Handle(); ok && !o.NoSave {

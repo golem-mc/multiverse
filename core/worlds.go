@@ -328,6 +328,7 @@ func (ws *Worlds) Load(w *World) (*World, error) {
 	if seed, ok := w.Seed(); ok {
 		opts.Seed = seed
 	}
+	opts.Folder = ws.core.ServerWorldFolder(WorldRef{Name: w.Name(), Key: w.Key()})
 	h, err := ws.core.Server.CreateWorld(opts)
 	if err != nil {
 		return nil, MsgError(M("mv-core.worldcreator.bukkitcreationfailed", "{world}", w.Name(), "{error}", err.Error()))
