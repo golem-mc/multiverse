@@ -176,10 +176,32 @@ func (c *Core) PotentialWorlds() []string {
 // serverDir answers the server directory, where Bukkit keeps world folders:
 // the working directory.
 func (c *Core) serverDir() string {
-	if abs, err := filepath.Abs("."); err == nil {
-		return abs
+	c.serverDirOnce.Do(func() {
+		c.serverDirPath = "."
+		if abs, err := filepath.Abs("."); err == nil {
+			c.serverDirPath = abs
+		}
+	})
+	return c.serverDirPath
+}
+
+// sourceFolder answers where a world's chunks and saved data are for
+// copying: the map folder in the server directory for a world imported from
+// there (its dimension folder in the 26.x layout), else its storage folder.
+func (c *Core) sourceFolder(ref WorldRef) string {
+	dir := c.ServerWorldFolder(ref)
+	if dir == "" {
+		dir = c.storageFolder(ref.Key)
 	}
-	return "."
+	if dim := filepath.Join(dir, "dimensions", "minecraft", "overworld"); ref.Key != plugin.MinecraftKey("overworld") && isDir(dim) {
+		return dim
+	}
+	return dir
+}
+
+func isDir(p string) bool {
+	st, err := os.Stat(p)
+	return err == nil && st.IsDir()
 }
 
 // ServerWorldFolder answers the map folder in the server directory that an

@@ -301,7 +301,11 @@ func (ws *Worlds) Delete(w *World, keep []string) error {
 	if isVanilla(w.Key()) {
 		return MsgError(M("mv-core.exception.multiverseworld.unloaddefaultworld", "{world}", w.Name()))
 	}
+	ref := WorldRef{Name: w.Name(), Key: w.Key()}
 	folder := ws.core.WorldFolder(w.Key())
+	if dir := ws.core.ServerWorldFolder(ref); dir != "" {
+		folder = dir
+	}
 	if _, err := os.Stat(folder); err != nil {
 		return MsgError(M("mv-core.deleteworld.worldfoldernotfound", "{world}", w.Name()))
 	}
@@ -371,8 +375,9 @@ func (ws *Worlds) Clone(o CloneOptions) (*World, error) {
 	if err != nil {
 		return nil, err
 	}
-	from := ws.core.storageFolder(o.From.Key())
-	if !ws.core.HasWorldFolder(WorldRef{Name: o.From.Name(), Key: o.From.Key()}) {
+	fromRef := WorldRef{Name: o.From.Name(), Key: o.From.Key()}
+	from := ws.core.sourceFolder(fromRef)
+	if !ws.core.HasWorldFolder(fromRef) {
 		return nil, MsgError(M("mv-core.cloneworld.fromworldfolderinvalid", "{world}", o.From.Name()))
 	}
 	if h, ok := o.From.Handle(); ok && !o.NoSave {

@@ -23,6 +23,9 @@ var Authors = []string{"dumptruckman", "Rigby", "fernferret", "lithium3141", "ma
 
 // Core is the running Multiverse-Core. MV: MultiverseCore, MultiverseCoreApi
 type Core struct {
+	serverDirOnce sync.Once
+	serverDirPath string
+
 	Server       plugin.Server
 	Log          *plugin.Logger
 	Config       *Config

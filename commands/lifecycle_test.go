@@ -298,4 +298,22 @@ func TestImportServerDirectoryMap(t *testing.T) {
 			}
 		})
 	}
+	// The imported maps clone from, and delete, their server-directory folder.
+	mvtest.Run(alice, "mv tp w:world")
+	env.Srv.RunTicks(40)
+	for _, name := range []string{"NewMap", "OldMap"} {
+		env.Expect(env.Console("mv clone "+name+" Copy"+name), "World cloned to 'Copy"+name+"'!")
+		if _, err := os.Stat(filepath.Join(env.MV.WorldFolder(world(env, "Copy"+name).Key()), "region")); err != nil {
+			t.Errorf("%s clone has no region folder: %v", name, err)
+		}
+		out := env.Console("mv delete " + name)
+		confirm(env, out)
+		env.Srv.RunTicks(3)
+		if _, ok := env.MV.Worlds.Get(name); ok {
+			t.Errorf("%s still known", name)
+		}
+		if _, err := os.Stat(name); !os.IsNotExist(err) {
+			t.Errorf("%s folder survived: %v", name, err)
+		}
+	}
 }
