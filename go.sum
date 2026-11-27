@@ -1,5 +1,5 @@
-github.com/golem-mc/golem v0.2.1-0.20261126022524-fc9511e1816a h1:ZQNPh1tzs5jxN3EB82Vp1xFDCT5ySzDhVywdBhJE0Lc=
-github.com/golem-mc/golem v0.2.1-0.20261126022524-fc9511e1816a/go.mod h1:zOE9zr1JxV+7zD0LdGHNt4+TaT1Ctx2GMYs54v1I608=
+github.com/golem-mc/golem v0.2.1-0.20261126224922-04d8cc014bce h1:wAQqC6ycnD9Zon/WZc5ve7BkYte3jaFgGBykvWPojCs=
+github.com/golem-mc/golem v0.2.1-0.20261126224922-04d8cc014bce/go.mod h1:zOE9zr1JxV+7zD0LdGHNt4+TaT1Ctx2GMYs54v1I608=
 github.com/golem-mc/vault v0.1.0 h1:46in39L5WfQMrVXFg/Ft/uqsmJjXIyEXZ4in644495w=
 github.com/golem-mc/vault v0.1.0/go.mod h1:rJtZ5F+MPmdpzl6PCSrbDgqsjrl7wfX51j5eHvR8+x8=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
