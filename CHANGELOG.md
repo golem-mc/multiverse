@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.1](https://github.com/golem-mc/multiverse/compare/v0.1.0...v0.1.1) (2026-11-28)
+
+
+### Bug Fixes
+
+* **deps:** update github.com/golem-mc/golem digest to 04d8cc0 ([#53](https://github.com/golem-mc/multiverse/issues/53)) ([176dee1](https://github.com/golem-mc/multiverse/commit/176dee1198ada41cfa004076f8083a662bcfb976))
+* **deps:** update github.com/golem-mc/golem digest to 59ed766 ([#54](https://github.com/golem-mc/multiverse/issues/54)) ([e4501d1](https://github.com/golem-mc/multiverse/commit/e4501d1507d21c3eaaa4e52b9615d811e53fad1d))
+* **deps:** update golem ([#39](https://github.com/golem-mc/multiverse/issues/39)) ([1d345bf](https://github.com/golem-mc/multiverse/commit/1d345bf68dd4802499163575e3f8e0c5c0c99721))
+* **deps:** update module github.com/golem-mc/golem to v0.2.0 ([#51](https://github.com/golem-mc/multiverse/issues/51)) ([586904e](https://github.com/golem-mc/multiverse/commit/586904ea13553d807b063b7296b9ac09c72f0569))
+* **deps:** update module github.com/golem-mc/vault to v0.1.0 ([#42](https://github.com/golem-mc/multiverse/issues/42)) ([ea9f278](https://github.com/golem-mc/multiverse/commit/ea9f2783e2ef9829096236970209b779e2a2352c))
+* import world folders from the server directory ([#52](https://github.com/golem-mc/multiverse/issues/52)) ([4f29790](https://github.com/golem-mc/multiverse/commit/4f297907c7dd3b3ffbbb0db963ced14f4f08806b))
+* localize command usage and argument error prefixes ([#49](https://github.com/golem-mc/multiverse/issues/49)) ([1e2a31e](https://github.com/golem-mc/multiverse/commit/1e2a31e1acb1e38ec287ed09c8f79a9a78bc4d52))
+* match paper command argument error formatting ([#48](https://github.com/golem-mc/multiverse/issues/48)) ([2047315](https://github.com/golem-mc/multiverse/commit/20473159afd6626a838752f81476847d3818b764))
+* show create-group usage with worlds before shares ([#45](https://github.com/golem-mc/multiverse/issues/45)) ([f40b545](https://github.com/golem-mc/multiverse/commit/f40b545a68b25fe614e56049ef2fd52ff819745f))
+
 ## 0.1.0 (2026-11-21)
 
 
